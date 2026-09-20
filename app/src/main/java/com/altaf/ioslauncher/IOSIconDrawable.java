@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -34,7 +35,9 @@ public final class IOSIconDrawable extends Drawable {
         canvas.drawRoundRect(rect, radius, radius, paint);
 
         int save = canvas.save();
-        canvas.clipRoundRect(rect, radius, radius);
+        Path clip = new Path();
+        clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
+        canvas.clipPath(clip);
 
         int pad = Math.max(1, Math.round(Math.min(b.width(), b.height()) * 0.055f));
         inner.setBounds(b.left + pad, b.top + pad, b.right - pad, b.bottom - pad);

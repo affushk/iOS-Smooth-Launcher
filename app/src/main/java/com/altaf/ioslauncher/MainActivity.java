@@ -6,11 +6,15 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -67,8 +71,7 @@ public class MainActivity extends Activity {
     private ViewPager2 pager;
     private LinearLayout dots;
     private LinearLayout dock;
-    private TextView batteryText;
-    private TextView networkText;
+    private StatusIconsView statusIconsView;
     private FrameLayout searchOverlay;
     private GridView searchGrid;
     private SearchAdapter searchAdapter;
@@ -84,6 +87,7 @@ public class MainActivity extends Activity {
     private int glassAlpha;
     private boolean showLabels;
     private boolean haptics;
+    private boolean showDateWidget;
     private String theme;
 
     private float touchDownX;
@@ -149,6 +153,7 @@ public class MainActivity extends Activity {
         labelSp = prefs.getInt("label_sp", 11);
         showLabels = prefs.getBoolean("labels", true);
         haptics = prefs.getBoolean("haptics", true);
+        showDateWidget = prefs.getBoolean("date_widget", false);
         glassAlpha = prefs.getInt("glass_alpha", 70);
 
         hiddenSet.clear();
@@ -191,7 +196,7 @@ public class MainActivity extends Activity {
         root.addView(content, new FrameLayout.LayoutParams(-1, -1));
 
         buildStatusBar();
-        buildDateCard();
+        if (showDateWidget) buildDateCard();
         buildPager();
         buildSearchPill();
         buildDock();
@@ -228,46 +233,35 @@ public class MainActivity extends Activity {
         time.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         bar.addView(time, new LinearLayout.LayoutParams(0, dp(28), 1f));
 
-        LinearLayout right = new LinearLayout(this);
-        right.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        statusIconsView = new StatusIconsView();
+        bar.addView(statusIconsView, new LinearLayout.LayoutParams(dp(94), dp(28)));
 
-        networkText = text("", 11, Color.WHITE);
-        networkText.setGravity(Gravity.CENTER);
-        right.addView(networkText, new LinearLayout.LayoutParams(dp(64), dp(28)));
-
-        batteryText = text("", 12, Color.WHITE);
-        batteryText.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        batteryText.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        right.addView(batteryText, new LinearLayout.LayoutParams(dp(54), dp(28)));
-
-        bar.addView(right, new LinearLayout.LayoutParams(0, dp(28), 1f));
         content.addView(bar, new LinearLayout.LayoutParams(-1, dp(30)));
-        updateStatus();
     }
 
     private void buildDateCard() {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(dp(17), dp(9), dp(17), dp(8));
+        card.setPadding(dp(15), dp(7), dp(15), dp(6));
         card.setBackground(glassRound(24));
 
         TextClock day = new TextClock(this);
         day.setFormat12Hour("EEEE");
         day.setFormat24Hour("EEEE");
         day.setTextColor(Color.WHITE);
-        day.setTextSize(20);
+        day.setTextSize(17);
         day.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        card.addView(day, new LinearLayout.LayoutParams(-1, dp(31)));
+        card.addView(day, new LinearLayout.LayoutParams(-1, dp(26)));
 
         TextClock date = new TextClock(this);
         date.setFormat12Hour("d MMMM");
         date.setFormat24Hour("d MMMM");
         date.setTextColor(Color.argb(205,255,255,255));
-        date.setTextSize(13);
-        card.addView(date, new LinearLayout.LayoutParams(-1, dp(22)));
+        date.setTextSize(12);
+        card.addView(date, new LinearLayout.LayoutParams(-1, dp(20)));
 
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(72));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(190), dp(58));
         lp.setMargins(0, dp(5), 0, dp(7));
         content.addView(card, lp);
     }
@@ -286,6 +280,8 @@ public class MainActivity extends Activity {
 
         RecyclerView inner = (RecyclerView) pager.getChildAt(0);
         inner.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        inner.setVerticalScrollBarEnabled(false);
+        inner.setHorizontalScrollBarEnabled(false);
 
         content.addView(pager, new LinearLayout.LayoutParams(-1, 0, 1f));
     }
@@ -493,6 +489,8 @@ public class MainActivity extends Activity {
         searchGrid.setPadding(0,dp(18),0,dp(10));
         searchGrid.setClipToPadding(false);
         searchGrid.setSelector(android.R.color.transparent);
+        searchGrid.setVerticalScrollBarEnabled(false);
+        searchGrid.setOverScrollMode(View.OVER_SCROLL_NEVER);
         searchAdapter = new SearchAdapter();
         searchGrid.setAdapter(searchAdapter);
         panel.addView(searchGrid,new LinearLayout.LayoutParams(-1,0,1f));
@@ -555,6 +553,8 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(Color.TRANSPARENT);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -631,6 +631,14 @@ public class MainActivity extends Activity {
         labels.setOnCheckedChangeListener((b,checked) -> {
             showLabels=checked;
             prefs.edit().putBoolean("labels",checked).apply();
+            rebuildAfterSettings(dialog);
+        });
+
+        Switch dateWidget = switchRow("Date Widget",showDateWidget);
+        layoutCard.addView(dateWidget,new LinearLayout.LayoutParams(-1,dp(50)));
+        dateWidget.setOnCheckedChangeListener((b,checked) -> {
+            showDateWidget=checked;
+            prefs.edit().putBoolean("date_widget",checked).apply();
             rebuildAfterSettings(dialog);
         });
 
@@ -751,6 +759,12 @@ public class MainActivity extends Activity {
         s.setTextSize(14);
         s.setChecked(checked);
         s.setPadding(dp(10),0,dp(10),0);
+        int[][] states = new int[][]{
+                new int[]{android.R.attr.state_checked},
+                new int[]{-android.R.attr.state_checked}
+        };
+        s.setThumbTintList(new ColorStateList(states, new int[]{Color.WHITE, Color.rgb(220,220,225)}));
+        s.setTrackTintList(new ColorStateList(states, new int[]{Color.rgb(52,199,89), Color.rgb(98,98,105)}));
         return s;
     }
 
@@ -797,6 +811,8 @@ public class MainActivity extends Activity {
         grid.setNumColumns(4);
         grid.setVerticalSpacing(dp(12));
         grid.setHorizontalSpacing(dp(5));
+        grid.setVerticalScrollBarEnabled(false);
+        grid.setOverScrollMode(View.OVER_SCROLL_NEVER);
         ChoiceAdapter adapter=new ChoiceAdapter(installedApps,selected);
         grid.setAdapter(adapter);
         panel.addView(grid,new LinearLayout.LayoutParams(-1,0,1f));
@@ -964,26 +980,7 @@ public class MainActivity extends Activity {
     }
 
     private void updateStatus() {
-        if(batteryText!=null){
-            BatteryManager bm=(BatteryManager)getSystemService(BATTERY_SERVICE);
-            int pct=bm==null?-1:bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-            batteryText.setText(pct>=0?pct+"%":"");
-        }
-        if(networkText!=null) networkText.setText(networkLabel());
-    }
-
-    private String networkLabel() {
-        try{
-            ConnectivityManager cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
-            Network n=cm.getActiveNetwork();
-            if(n==null) return "";
-            NetworkCapabilities c=cm.getNetworkCapabilities(n);
-            if(c==null) return "";
-            if(c.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return "Wi-Fi";
-            if(c.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) return "Mobile";
-            if(c.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) return "Ethernet";
-        }catch(Exception ignored){}
-        return "";
+        if (statusIconsView != null) statusIconsView.invalidate();
     }
 
     private void openApp(AppItem app,View pressed) {
@@ -1093,8 +1090,70 @@ public class MainActivity extends Activity {
         return Math.round(n*getResources().getDisplayMetrics().density);
     }
 
+    private float dp(float n) {
+        return n*getResources().getDisplayMetrics().density;
+    }
+
     private String key(AppItem app) {
         return app.component.flattenToString();
+    }
+
+    private final class StatusIconsView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF rect = new RectF();
+
+        StatusIconsView() {
+            super(MainActivity.this);
+            paint.setColor(Color.WHITE);
+            paint.setStrokeWidth(dp(1));
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            paint.setColor(Color.WHITE);
+
+            // Cellular bars
+            float x = dp(1);
+            float base = dp(20);
+            for (int i=0;i<4;i++) {
+                float h = dp(4 + i*3);
+                canvas.drawRoundRect(x + dp(i*5), base-h, x + dp(i*5+3), base, dp(1), dp(1), paint);
+            }
+
+            // Wi-Fi arcs
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(1.6f));
+            float wx = dp(29);
+            float wy = dp(13);
+            for (int i=0;i<3;i++) {
+                float r = dp(4 + i*3);
+                rect.set(wx-r, wy-r, wx+r, wy+r);
+                canvas.drawArc(rect, 215, 110, false, paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(wx, dp(17), dp(1.3f), paint);
+
+            // Battery
+            BatteryManager bm=(BatteryManager)getSystemService(BATTERY_SERVICE);
+            int pct=bm==null?0:bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+            float bx=dp(48), by=dp(7), bw=dp(27), bh=dp(13);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(1.2f));
+            rect.set(bx,by,bx+bw,by+bh);
+            canvas.drawRoundRect(rect,dp(3),dp(3),paint);
+            canvas.drawRoundRect(bx+bw+dp(1),by+dp(4),bx+bw+dp(3),by+bh-dp(4),dp(1),dp(1),paint);
+            paint.setStyle(Paint.Style.FILL);
+            float fill=Math.max(0,Math.min(1,pct/100f));
+            rect.set(bx+dp(2),by+dp(2),bx+dp(2)+(bw-dp(4))*fill,by+bh-dp(2));
+            canvas.drawRoundRect(rect,dp(2),dp(2),paint);
+
+            paint.setTextSize(dp(9));
+            paint.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));
+            canvas.drawText(pct+"%", dp(80), dp(17), paint);
+        }
     }
 
     private final class PageAdapter extends RecyclerView.Adapter<PageHolder> {

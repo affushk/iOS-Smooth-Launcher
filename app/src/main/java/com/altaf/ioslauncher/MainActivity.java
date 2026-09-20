@@ -141,7 +141,7 @@ public class MainActivity extends Activity {
             if (dy > dp(78) && Math.abs(dx) < dp(115)) {
                 if (touchDownY < dp(82)) {
                     if (touchDownX > getResources().getDisplayMetrics().widthPixels * .58f) {
-                        IOSSystemPanels.showControlCenter(this, root, content, haptics);
+                        IOSSystemPanels.showControlCenter(this, root, content, haptics, this::showSettings);
                     } else {
                         IOSSystemPanels.showNotificationCenter(this, root, content, haptics);
                     }

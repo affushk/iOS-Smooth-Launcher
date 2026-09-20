@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,6 +86,8 @@ public class MainActivity extends Activity {
     private int iconDp;
     private int labelSp;
     private int glassAlpha;
+    private int iconCornerDp;
+    private String iconPackPackage;
     private boolean showLabels;
     private boolean haptics;
     private boolean showDateWidget;
@@ -155,6 +158,8 @@ public class MainActivity extends Activity {
         haptics = prefs.getBoolean("haptics", true);
         showDateWidget = prefs.getBoolean("date_widget", false);
         glassAlpha = prefs.getInt("glass_alpha", 70);
+        iconCornerDp = prefs.getInt("icon_corner_dp", 14);
+        iconPackPackage = prefs.getString("icon_pack", "");
 
         hiddenSet.clear();
         hiddenSet.addAll(prefs.getStringSet("hidden_apps", new HashSet<>()));
@@ -325,8 +330,9 @@ public class MainActivity extends Activity {
             FrameLayout slot = new FrameLayout(this);
 
             ImageView icon = new ImageView(this);
-            icon.setImageDrawable(app.icon);
+            icon.setImageDrawable(displayIcon(app));
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            styleIcon(icon);
             int size = Math.min(62, iconDp + 2);
             slot.addView(icon, new FrameLayout.LayoutParams(dp(size), dp(size), Gravity.CENTER));
 
@@ -356,8 +362,9 @@ public class MainActivity extends Activity {
         wrapper.addView(box, new FrameLayout.LayoutParams(-1,-1));
 
         ImageView icon = new ImageView(this);
-        icon.setImageDrawable(app.icon);
+        icon.setImageDrawable(displayIcon(app));
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            styleIcon(icon);
         int realSize = Math.max(44, Math.min(iconDp, columns == 5 ? 52 : 64));
         box.addView(icon, new LinearLayout.LayoutParams(dp(realSize), dp(realSize)));
 
@@ -569,9 +576,20 @@ public class MainActivity extends Activity {
         handleRow.addView(handle,new LinearLayout.LayoutParams(dp(38),dp(5)));
         panel.addView(handleRow,new LinearLayout.LayoutParams(-1,dp(20)));
 
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+
         TextView title = title("Customize");
-        title.setGravity(Gravity.CENTER);
-        panel.addView(title,new LinearLayout.LayoutParams(-1,dp(42)));
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        titleRow.addView(title,new LinearLayout.LayoutParams(0,dp(44),1f));
+
+        TextView doneSettings = text("Done",14,Color.rgb(100,175,255));
+        doneSettings.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        doneSettings.setGravity(Gravity.CENTER);
+        titleRow.addView(doneSettings,new LinearLayout.LayoutParams(dp(68),dp(40)));
+        doneSettings.setOnClickListener(v -> animateDialogClose(dialog,null));
+
+        panel.addView(titleRow,new LinearLayout.LayoutParams(-1,dp(48)));
 
         LinearLayout themeCard = group();
         themeCard.addView(groupTitle("Wallpaper & Theme"));
@@ -626,6 +644,22 @@ public class MainActivity extends Activity {
             public void onStopTrackingTouch(SeekBar s) { rebuildAfterSettings(dialog); }
         });
 
+        TextView cornerValue = text("Icon Corner  •  " + iconCornerDp + " dp",13,Color.WHITE);
+        cornerValue.setPadding(dp(10),dp(4),dp(10),0);
+        layoutCard.addView(cornerValue,new LinearLayout.LayoutParams(-1,dp(32)));
+        SeekBar cornerSeek = new SeekBar(this);
+        cornerSeek.setMax(24);
+        cornerSeek.setProgress(Math.max(0,Math.min(24,iconCornerDp)));
+        layoutCard.addView(cornerSeek,new LinearLayout.LayoutParams(-1,dp(46)));
+        cornerSeek.setOnSeekBarChangeListener(new SimpleSeek() {
+            public void onProgressChanged(SeekBar s,int p,boolean f) {
+                iconCornerDp=p;
+                cornerValue.setText("Icon Corner  •  " + iconCornerDp + " dp");
+                prefs.edit().putInt("icon_corner_dp",iconCornerDp).apply();
+            }
+            public void onStopTrackingTouch(SeekBar s) { rebuildAfterSettings(dialog); }
+        });
+
         Switch labels = switchRow("Show App Labels",showLabels);
         layoutCard.addView(labels,new LinearLayout.LayoutParams(-1,dp(50)));
         labels.setOnCheckedChangeListener((b,checked) -> {
@@ -672,6 +706,13 @@ public class MainActivity extends Activity {
 
         LinearLayout appCard = group();
         appCard.addView(groupTitle("Apps"));
+
+        TextView iconPackRow = settingsRow("Icon Pack", iconPackPackage == null || iconPackPackage.isEmpty()
+                ? "Default app icons"
+                : IconPackManager.labelForPackage(this,iconPackPackage));
+        appCard.addView(iconPackRow,new LinearLayout.LayoutParams(-1,dp(58)));
+        iconPackRow.setOnClickListener(v -> showIconPackChooser(dialog));
+
         TextView dockRow = settingsRow("Customize Dock","Choose your 4 favorite apps");
         appCard.addView(dockRow,new LinearLayout.LayoutParams(-1,dp(58)));
         dockRow.setOnClickListener(v -> showDockChooser(dialog));
@@ -685,8 +726,7 @@ public class MainActivity extends Activity {
         systemCard.addView(groupTitle("System"));
         TextView def = settingsRow("Set as Default Launcher","Use this launcher for Home");
         systemCard.addView(def,new LinearLayout.LayoutParams(-1,dp(58)));
-        def.setOnClickListener(v -> {
-            dialog.dismiss();
+        def.setOnClickListener(v -> animateDialogClose(dialog,() -> {
             try {
                 startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
             } catch (Exception e) {
@@ -694,11 +734,8 @@ public class MainActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_HOME);
                 startActivity(Intent.createChooser(i,"Choose Home app"));
             }
-        });
+        }));
 
-        TextView settings = settingsRow("Android Settings","Open device settings");
-        systemCard.addView(settings,new LinearLayout.LayoutParams(-1,dp(58)));
-        settings.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_SETTINGS)));
         addCard(panel,systemCard);
 
         TextView hint = text("Home Screen app icon par long-press → Edit Mode. Empty area par long-press → Customize. Swipe down → Spotlight Search.",12,Color.argb(165,255,255,255));
@@ -713,11 +750,20 @@ public class MainActivity extends Activity {
             w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             w.setGravity(Gravity.BOTTOM);
         }
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setOnKeyListener((d,key,event) -> {
+            if(key==KeyEvent.KEYCODE_BACK && event.getAction()==KeyEvent.ACTION_UP){
+                animateDialogClose(dialog,null);
+                return true;
+            }
+            return false;
+        });
         dialog.setOnShowListener(d -> {
             Window ww=dialog.getWindow();
             if(ww!=null) ww.setLayout(WindowManager.LayoutParams.MATCH_PARENT,(int)(getResources().getDisplayMetrics().heightPixels*.84f));
         });
         dialog.show();
+        animateDialogOpen(dialog);
     }
 
     private LinearLayout group() {
@@ -834,9 +880,7 @@ public class MainActivity extends Activity {
                 sb.append(selected.get(i));
             }
             prefs.edit().putString("dock_apps",sb.toString()).apply();
-            dialog.dismiss();
-            settingsDialog.dismiss();
-            buildLauncher();
+            animateDialogClose(dialog,() -> animateDialogClose(settingsDialog,this::buildLauncher));
         });
 
         dialog.setContentView(panel);
@@ -903,9 +947,144 @@ public class MainActivity extends Activity {
         dialog.show();
     }
 
+    private void showIconPackChooser(Dialog settingsDialog) {
+        final Dialog dialog=new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(14),dp(14),dp(14),dp(14));
+        panel.setBackground(round(Color.rgb(24,26,34),24));
+
+        TextView title=title("Icon Packs");
+        panel.addView(title,new LinearLayout.LayoutParams(-1,dp(44)));
+
+        TextView info=text("Compatible installed icon packs yahan dikhte hain. Play Store se iOS-style icon pack install karke phir yahan select karo.",12,Color.argb(175,255,255,255));
+        info.setPadding(0,0,0,dp(8));
+        panel.addView(info,new LinearLayout.LayoutParams(-1,dp(58)));
+
+        TextView defaultRow=settingsRow("Default Icons","Use original app icons");
+        panel.addView(defaultRow,new LinearLayout.LayoutParams(-1,dp(58)));
+        defaultRow.setOnClickListener(v -> {
+            prefs.edit().putString("icon_pack","").apply();
+            iconPackPackage="";
+            animateDialogClose(dialog,() -> animateDialogClose(settingsDialog,this::buildLauncher));
+        });
+
+        List<IconPackManager.Pack> packs=IconPackManager.discover(this);
+        if(packs.isEmpty()){
+            TextView empty=text("Koi compatible icon pack detect nahi hua. Play Store se icon pack install karke launcher dubara open karo.",13,Color.argb(190,255,255,255));
+            empty.setPadding(dp(8),dp(14),dp(8),dp(14));
+            panel.addView(empty,new LinearLayout.LayoutParams(-1,dp(86)));
+        }else{
+            ScrollView listScroll=new ScrollView(this);
+            listScroll.setVerticalScrollBarEnabled(false);
+            LinearLayout list=new LinearLayout(this);
+            list.setOrientation(LinearLayout.VERTICAL);
+
+            for(IconPackManager.Pack pack:packs){
+                LinearLayout row=new LinearLayout(this);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(dp(8),dp(4),dp(8),dp(4));
+
+                ImageView icon=new ImageView(this);
+                icon.setImageDrawable(pack.icon);
+                styleIcon(icon);
+                row.addView(icon,new LinearLayout.LayoutParams(dp(44),dp(44)));
+
+                TextView label=text(pack.label,14,Color.WHITE);
+                label.setPadding(dp(12),0,0,0);
+                row.addView(label,new LinearLayout.LayoutParams(0,dp(52),1f));
+
+                if(pack.packageName.equals(iconPackPackage)){
+                    TextView check=text("✓",17,Color.rgb(52,199,89));
+                    check.setGravity(Gravity.CENTER);
+                    row.addView(check,new LinearLayout.LayoutParams(dp(36),dp(52)));
+                }
+
+                row.setOnClickListener(v -> {
+                    prefs.edit().putString("icon_pack",pack.packageName).apply();
+                    iconPackPackage=pack.packageName;
+                    animateDialogClose(dialog,() -> animateDialogClose(settingsDialog,this::buildLauncher));
+                });
+                list.addView(row,new LinearLayout.LayoutParams(-1,dp(58)));
+            }
+            listScroll.addView(list,new ScrollView.LayoutParams(-1,-2));
+            panel.addView(listScroll,new LinearLayout.LayoutParams(-1,0,1f));
+        }
+
+        dialog.setContentView(panel);
+        Window w=dialog.getWindow();
+        if(w!=null){
+            w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            w.setGravity(Gravity.BOTTOM);
+        }
+        dialog.setOnShowListener(d -> {
+            Window ww=dialog.getWindow();
+            if(ww!=null) ww.setLayout(WindowManager.LayoutParams.MATCH_PARENT,(int)(getResources().getDisplayMetrics().heightPixels*.68f));
+        });
+        dialog.show();
+        animateDialogOpen(dialog);
+    }
+
+    private Drawable displayIcon(AppItem app) {
+        return IconPackManager.iconFor(this,iconPackPackage,app.component,app.icon);
+    }
+
+    private void styleIcon(ImageView icon) {
+        GradientDrawable mask=new GradientDrawable();
+        mask.setColor(Color.TRANSPARENT);
+        mask.setCornerRadius(dp(iconCornerDp));
+        icon.setBackground(mask);
+        icon.setClipToOutline(iconCornerDp>0);
+    }
+
+    private void animateDialogOpen(Dialog dialog) {
+        Window w=dialog.getWindow();
+        if(w==null) return;
+        View decor=w.getDecorView();
+        decor.setAlpha(0f);
+        decor.setTranslationY(dp(90));
+        decor.setScaleX(.98f);
+        decor.setScaleY(.98f);
+        decor.animate()
+                .alpha(1f)
+                .translationY(0)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(260)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+    }
+
+    private void animateDialogClose(Dialog dialog,Runnable after) {
+        if(dialog==null || !dialog.isShowing()){
+            if(after!=null) after.run();
+            return;
+        }
+        Window w=dialog.getWindow();
+        if(w==null){
+            dialog.dismiss();
+            if(after!=null) after.run();
+            return;
+        }
+        View decor=w.getDecorView();
+        decor.animate()
+                .alpha(0f)
+                .translationY(dp(110))
+                .scaleX(.985f)
+                .scaleY(.985f)
+                .setDuration(210)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> {
+                    try { dialog.dismiss(); } catch(Exception ignored) {}
+                    if(after!=null) after.run();
+                })
+                .start();
+    }
+
     private void rebuildAfterSettings(Dialog dialog) {
-        dialog.dismiss();
-        buildLauncher();
+        animateDialogClose(dialog,this::buildLauncher);
     }
 
     private LinearLayout chipRow() {
@@ -1207,7 +1386,7 @@ public class MainActivity extends Activity {
             box.setGravity(Gravity.CENTER);
 
             ImageView icon=new ImageView(MainActivity.this);
-            icon.setImageDrawable(app.icon);
+            icon.setImageDrawable(displayIcon(app));
             int s=columns==5?48:56;
             box.addView(icon,new LinearLayout.LayoutParams(dp(s),dp(s)));
 
@@ -1242,7 +1421,7 @@ public class MainActivity extends Activity {
             box.setAlpha(checked?1f:.55f);
 
             ImageView icon=new ImageView(MainActivity.this);
-            icon.setImageDrawable(app.icon);
+            icon.setImageDrawable(displayIcon(app));
             box.addView(icon,new LinearLayout.LayoutParams(dp(52),dp(52)));
 
             TextView label=text((checked?"✓ ":"")+app.label,10,Color.WHITE);

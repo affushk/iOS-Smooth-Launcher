@@ -144,7 +144,6 @@ public final class IconPackManager {
 
             try {
                 InputStream in = packContext.getAssets().open("appfilter.xml");
-                android.util.XmlPullAttributes attrs = null;
                 org.xmlpull.v1.XmlPullParser parser = android.util.Xml.newPullParser();
                 parser.setInput(in, "utf-8");
                 parse(parser, out);

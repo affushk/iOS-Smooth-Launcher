@@ -37,7 +37,7 @@ public final class IOSSystemPanels {
 
     private IOSSystemPanels() {}
 
-    public static void showControlCenter(Activity activity, FrameLayout root, View home, boolean haptics) {
+    public static void showControlCenter(Activity activity, FrameLayout root, View home, boolean haptics, Runnable settingsAction) {
         if (findOverlay(root, "ios_control") != null) return;
         if (haptics) root.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
 
@@ -129,7 +129,7 @@ public final class IOSSystemPanels {
         bottom.addView(notify, np);
         sheet.addView(bottom, new LinearLayout.LayoutParams(-1, dp(activity, 84)));
 
-        settings.setOnClickListener(v -> dismiss(root, overlay, sheet, home));
+        settings.setOnClickListener(v -> runAndDismiss(root, overlay, sheet, home, settingsAction));
         notify.setOnClickListener(v -> {
             dismiss(root, overlay, sheet, home);
             showNotificationCenter(activity, root, home, haptics);

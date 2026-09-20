@@ -22,6 +22,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -136,7 +137,18 @@ public class MainActivity extends Activity {
                 && searchOverlay.getVisibility() != View.VISIBLE) {
             float dx = ev.getX() - touchDownX;
             float dy = ev.getY() - touchDownY;
-            if (dy > dp(95) && Math.abs(dx) < dp(90)) showSearch();
+
+            if (dy > dp(78) && Math.abs(dx) < dp(115)) {
+                if (touchDownY < dp(82)) {
+                    if (touchDownX > getResources().getDisplayMetrics().widthPixels * .58f) {
+                        IOSSystemPanels.showControlCenter(this, root, content, haptics);
+                    } else {
+                        IOSSystemPanels.showNotificationCenter(this, root, content, haptics);
+                    }
+                } else {
+                    showSearch();
+                }
+            }
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -340,7 +352,7 @@ public class MainActivity extends Activity {
                 if (!editMode) openApp(app, icon);
             });
             slot.setOnLongClickListener(v -> {
-                enterEditMode();
+                showAppActions(app);
                 return true;
             });
 
@@ -381,7 +393,7 @@ public class MainActivity extends Activity {
             if (!editMode) openApp(app, icon);
         });
         wrapper.setOnLongClickListener(v -> {
-            enterEditMode();
+            showAppActions(app);
             return true;
         });
 
@@ -462,38 +474,81 @@ public class MainActivity extends Activity {
     private void buildSearchOverlay() {
         searchOverlay = new FrameLayout(this);
         searchOverlay.setVisibility(View.GONE);
-        searchOverlay.setBackgroundColor(Color.argb(238, 7, 9, 14));
+        searchOverlay.setBackgroundColor(Color.argb(125, 0, 0, 0));
 
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(16), dp(24), dp(16), dp(14));
+        panel.setPadding(dp(18), dp(22), dp(18), dp(16));
 
-        LinearLayout top = new LinearLayout(this);
-        top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView heading = text("Search", 29, Color.WHITE);
+        heading.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        panel.addView(heading, new LinearLayout.LayoutParams(-1, dp(47)));
+
+        LinearLayout searchBar = new LinearLayout(this);
+        searchBar.setGravity(Gravity.CENTER_VERTICAL);
+        searchBar.setPadding(dp(13), 0, dp(8), 0);
+        searchBar.setBackground(round(Color.argb(150, 54, 57, 66), 17));
+
+        TextView magnify = text("⌕", 21, Color.argb(210,255,255,255));
+        magnify.setGravity(Gravity.CENTER);
+        searchBar.addView(magnify, new LinearLayout.LayoutParams(dp(35), dp(45)));
 
         EditText field = new EditText(this);
         field.setSingleLine(true);
-        field.setHint("Search Apps");
-        field.setHintTextColor(Color.argb(165,255,255,255));
+        field.setHint("Search");
+        field.setHintTextColor(Color.argb(175,255,255,255));
         field.setTextColor(Color.WHITE);
         field.setTextSize(17);
-        field.setPadding(dp(16),0,dp(16),0);
-        field.setBackground(round(Color.argb(58,255,255,255), 22));
-        top.addView(field, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        field.setPadding(0,0,dp(4),0);
+        field.setBackgroundColor(Color.TRANSPARENT);
+        searchBar.addView(field, new LinearLayout.LayoutParams(0, dp(45), 1f));
 
-        TextView cancel = text("Cancel", 15, Color.rgb(100,175,255));
+        TextView cancel = text("Cancel", 15, Color.rgb(92,175,255));
         cancel.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(dp(76),dp(48));
-        cp.setMargins(dp(6),0,0,0);
-        top.addView(cancel,cp);
+        searchBar.addView(cancel, new LinearLayout.LayoutParams(dp(70), dp(45)));
 
-        panel.addView(top,new LinearLayout.LayoutParams(-1,dp(52)));
+        panel.addView(searchBar, new LinearLayout.LayoutParams(-1, dp(48)));
+
+        TextView suggested = text("SUGGESTIONS", 11, Color.argb(165,255,255,255));
+        suggested.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        suggested.setPadding(dp(3), dp(14), 0, dp(4));
+        panel.addView(suggested, new LinearLayout.LayoutParams(-1, dp(40)));
+
+        LinearLayout suggestionRow = new LinearLayout(this);
+        suggestionRow.setGravity(Gravity.CENTER);
+        int suggestCount = Math.min(4, visibleApps.size());
+        for (int i=0;i<suggestCount;i++) {
+            AppItem app=visibleApps.get(i);
+            LinearLayout cell=new LinearLayout(this);
+            cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setGravity(Gravity.CENTER);
+            ImageView icon=new ImageView(this);
+            icon.setImageDrawable(displayIcon(app));
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            styleIcon(icon);
+            cell.addView(icon,new LinearLayout.LayoutParams(dp(50),dp(50)));
+            TextView label=text(app.label,10,Color.WHITE);
+            label.setGravity(Gravity.CENTER);
+            label.setSingleLine(true);
+            cell.addView(label,new LinearLayout.LayoutParams(-1,dp(23)));
+            suggestionRow.addView(cell,new LinearLayout.LayoutParams(0,dp(80),1f));
+            cell.setOnClickListener(v -> {
+                hideSearch();
+                v.postDelayed(() -> openApp(app,icon),150);
+            });
+        }
+        panel.addView(suggestionRow,new LinearLayout.LayoutParams(-1,dp(82)));
+
+        TextView appsTitle = text("APPS", 11, Color.argb(165,255,255,255));
+        appsTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        appsTitle.setPadding(dp(3), dp(4), 0, dp(4));
+        panel.addView(appsTitle, new LinearLayout.LayoutParams(-1, dp(31)));
 
         searchGrid = new GridView(this);
         searchGrid.setNumColumns(4);
-        searchGrid.setVerticalSpacing(dp(15));
+        searchGrid.setVerticalSpacing(dp(14));
         searchGrid.setHorizontalSpacing(dp(5));
-        searchGrid.setPadding(0,dp(18),0,dp(10));
+        searchGrid.setPadding(0,dp(8),0,dp(8));
         searchGrid.setClipToPadding(false);
         searchGrid.setSelector(android.R.color.transparent);
         searchGrid.setVerticalScrollBarEnabled(false);
@@ -511,36 +566,47 @@ public class MainActivity extends Activity {
             public void afterTextChanged(android.text.Editable e) {}
         });
 
-        searchGrid.setOnItemClickListener((p,v,pos,id) -> openApp(searchApps.get(pos),v));
+        searchGrid.setOnItemClickListener((p,v,pos,id) -> {
+            AppItem app=searchApps.get(pos);
+            hideSearch();
+            v.postDelayed(() -> openApp(app,v),150);
+        });
         cancel.setOnClickListener(v -> hideSearch());
         searchOverlay.setTag(field);
     }
 
     private void showSearch() {
+        if (searchOverlay == null || searchOverlay.getVisibility() == View.VISIBLE) return;
         searchApps.clear();
         searchApps.addAll(visibleApps);
         searchAdapter.notifyDataSetChanged();
 
         EditText field = (EditText) searchOverlay.getTag();
         field.setText("");
+        setHomeBlur(true);
+
         searchOverlay.setVisibility(View.VISIBLE);
         searchOverlay.setAlpha(0f);
-        searchOverlay.setTranslationY(dp(18));
+        searchOverlay.setTranslationY(dp(22));
         searchOverlay.animate()
                 .alpha(1f).translationY(0)
-                .setDuration(200)
+                .setDuration(235)
                 .setInterpolator(new DecelerateInterpolator())
                 .start();
+
         field.requestFocus();
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
 
     private void hideSearch() {
+        if (searchOverlay == null || searchOverlay.getVisibility() != View.VISIBLE) return;
         searchOverlay.animate()
-                .alpha(0f).translationY(dp(14))
-                .setDuration(150)
+                .alpha(0f).translationY(dp(18))
+                .setDuration(175)
                 .withEndAction(() -> {
                     searchOverlay.setVisibility(View.GONE);
                     searchOverlay.setTranslationY(0);
+                    setHomeBlur(false);
                 }).start();
     }
 
@@ -1028,15 +1094,14 @@ public class MainActivity extends Activity {
     }
 
     private Drawable displayIcon(AppItem app) {
-        return IconPackManager.iconFor(this,iconPackPackage,app.component,app.icon);
+        Drawable base = IconPackManager.iconFor(this,iconPackPackage,app.component,app.icon);
+        float ratio = Math.max(.16f, Math.min(.36f, iconCornerDp / 64f));
+        return new IOSIconDrawable(base, ratio);
     }
 
     private void styleIcon(ImageView icon) {
-        GradientDrawable mask=new GradientDrawable();
-        mask.setColor(Color.TRANSPARENT);
-        mask.setCornerRadius(dp(iconCornerDp));
-        icon.setBackground(mask);
-        icon.setClipToOutline(iconCornerDp>0);
+        icon.setClipToOutline(false);
+        icon.setPadding(0,0,0,0);
     }
 
     private void animateDialogOpen(Dialog dialog) {
@@ -1163,6 +1228,16 @@ public class MainActivity extends Activity {
     }
 
     private void openApp(AppItem app,View pressed) {
+        String pkg = app.component.getPackageName().toLowerCase(Locale.ROOT);
+        String lbl = app.label.toLowerCase(Locale.ROOT);
+
+        // Keep normal launcher settings inside our iOS-style Settings hub.
+        if ("settings".equals(lbl) || pkg.contains("settings")) {
+            press(pressed);
+            showSettings();
+            return;
+        }
+
         if(haptics) pressed.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
         pressed.animate().scaleX(.86f).scaleY(.86f).setDuration(70).withEndAction(() -> {
             pressed.animate().scaleX(1f).scaleY(1f).setDuration(150).setInterpolator(new DecelerateInterpolator()).start();
@@ -1175,6 +1250,71 @@ public class MainActivity extends Activity {
                 Toast.makeText(this,"App open nahi hua",Toast.LENGTH_SHORT).show();
             }
         }).start();
+    }
+
+    private void showAppActions(AppItem app) {
+        IOSSystemPanels.showAppActions(
+                this,
+                root,
+                content,
+                app.label,
+                displayIcon(app),
+                () -> openApp(app, root),
+                () -> addAppToDock(app),
+                this::showSettings,
+                () -> hideApp(app),
+                () -> openAppInfo(app),
+                () -> uninstallApp(app),
+                haptics
+        );
+    }
+
+    private void addAppToDock(AppItem app) {
+        ArrayList<String> keys = new ArrayList<>();
+        String saved = prefs.getString("dock_apps","");
+        if (!saved.isEmpty()) {
+            String[] parts = saved.split("\\|");
+            for (String s : parts) if (!s.isEmpty() && !s.equals(key(app))) keys.add(s);
+        }
+        keys.add(key(app));
+        while (keys.size() > 4) keys.remove(0);
+
+        StringBuilder sb=new StringBuilder();
+        for (int i=0;i<keys.size();i++) {
+            if (i>0) sb.append("|");
+            sb.append(keys.get(i));
+        }
+        prefs.edit().putString("dock_apps",sb.toString()).apply();
+        buildLauncher();
+        Toast.makeText(this,app.label+" added to Dock",Toast.LENGTH_SHORT).show();
+    }
+
+    private void openAppInfo(AppItem app) {
+        try {
+            Intent i=new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:"+app.component.getPackageName()));
+            startActivity(i);
+        } catch(Exception ignored) {}
+    }
+
+    private void uninstallApp(AppItem app) {
+        try {
+            startActivity(new Intent(Intent.ACTION_DELETE,
+                    Uri.parse("package:"+app.component.getPackageName())));
+        } catch(Exception ignored) {}
+    }
+
+    private void setHomeBlur(boolean enabled) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (enabled) {
+                content.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(
+                        18f,18f,android.graphics.Shader.TileMode.CLAMP));
+            } else {
+                content.setRenderEffect(null);
+            }
+        } else {
+            content.setAlpha(enabled ? .62f : 1f);
+        }
     }
 
     private void press(View v) {
@@ -1329,9 +1469,13 @@ public class MainActivity extends Activity {
             rect.set(bx+dp(2),by+dp(2),bx+dp(2)+(bw-dp(4))*fill,by+bh-dp(2));
             canvas.drawRoundRect(rect,dp(2),dp(2),paint);
 
-            paint.setTextSize(dp(9));
+            paint.setTextSize(dp(8));
             paint.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));
-            canvas.drawText(pct+"%", dp(80), dp(17), paint);
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setColor(pct > 55 ? Color.BLACK : Color.WHITE);
+            canvas.drawText(String.valueOf(pct), bx + bw/2f, by + dp(10), paint);
+            paint.setTextAlign(Paint.Align.LEFT);
+            paint.setColor(Color.WHITE);
         }
     }
 
@@ -1387,6 +1531,8 @@ public class MainActivity extends Activity {
 
             ImageView icon=new ImageView(MainActivity.this);
             icon.setImageDrawable(displayIcon(app));
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            styleIcon(icon);
             int s=columns==5?48:56;
             box.addView(icon,new LinearLayout.LayoutParams(dp(s),dp(s)));
 
@@ -1422,6 +1568,8 @@ public class MainActivity extends Activity {
 
             ImageView icon=new ImageView(MainActivity.this);
             icon.setImageDrawable(displayIcon(app));
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            styleIcon(icon);
             box.addView(icon,new LinearLayout.LayoutParams(dp(52),dp(52)));
 
             TextView label=text((checked?"✓ ":"")+app.label,10,Color.WHITE);

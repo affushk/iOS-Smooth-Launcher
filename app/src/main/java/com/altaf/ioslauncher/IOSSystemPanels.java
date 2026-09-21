@@ -59,22 +59,56 @@ public final class IOSSystemPanels {
         LinearLayout top = new LinearLayout(activity);
         top.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView network = tile(activity, wifiActive(activity) ? "Wi‑Fi\nConnected" : "Wi‑Fi\nOff / Mobile", true);
-        top.addView(network, new LinearLayout.LayoutParams(0, dp(activity, 96), 1f));
+        LinearLayout connectivity = new LinearLayout(activity);
+        connectivity.setOrientation(LinearLayout.VERTICAL);
+        connectivity.setPadding(dp(activity, 8),dp(activity, 8),dp(activity, 8),dp(activity, 8));
+        connectivity.setBackground(glass(activity, 24, 196));
 
-        TextView bluetooth = tile(activity, "Bluetooth\nSettings", false);
-        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(0, dp(activity, 96), 1f);
-        bp.setMargins(dp(activity, 10), 0, 0, 0);
-        top.addView(bluetooth, bp);
+        LinearLayout row1 = new LinearLayout(activity);
+        LinearLayout row2 = new LinearLayout(activity);
 
-        sheet.addView(top, new LinearLayout.LayoutParams(-1, dp(activity, 96)));
+        TextView airplane = miniTile(activity,"✈","Airplane",false);
+        TextView cellular = miniTile(activity,"▥","Cellular",true);
+        TextView wifi = miniTile(activity,"⌁","Wi‑Fi",wifiActive(activity));
+        TextView bluetooth = miniTile(activity,"ᛒ","Bluetooth",false);
 
-        network.setOnClickListener(v -> openPanel(activity, Settings.Panel.ACTION_INTERNET_CONNECTIVITY, Settings.ACTION_WIFI_SETTINGS));
+        row1.addView(airplane,new LinearLayout.LayoutParams(0,dp(activity,58),1f));
+        LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,dp(activity,58),1f);
+        cellLp.setMargins(dp(activity,6),0,0,0);
+        row1.addView(cellular,cellLp);
+
+        row2.addView(wifi,new LinearLayout.LayoutParams(0,dp(activity,58),1f));
+        LinearLayout.LayoutParams btLp=new LinearLayout.LayoutParams(0,dp(activity,58),1f);
+        btLp.setMargins(dp(activity,6),0,0,0);
+        row2.addView(bluetooth,btLp);
+
+        connectivity.addView(row1,new LinearLayout.LayoutParams(-1,dp(activity,58)));
+        LinearLayout.LayoutParams row2Lp=new LinearLayout.LayoutParams(-1,dp(activity,58));
+        row2Lp.setMargins(0,dp(activity,6),0,0);
+        connectivity.addView(row2,row2Lp);
+
+        LinearLayout media = new LinearLayout(activity);
+        media.setOrientation(LinearLayout.VERTICAL);
+        media.setGravity(Gravity.CENTER);
+        media.setBackground(glass(activity,24,196));
+        TextView mediaTitle=text(activity,"Not Playing",14,Color.WHITE);
+        mediaTitle.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        mediaTitle.setGravity(Gravity.CENTER);
+        media.addView(mediaTitle,new LinearLayout.LayoutParams(-1,dp(activity,54)));
+        TextView mediaControls=text(activity,"◀     ▶",18,Color.argb(220,255,255,255));
+        mediaControls.setGravity(Gravity.CENTER);
+        media.addView(mediaControls,new LinearLayout.LayoutParams(-1,dp(activity,58)));
+
+        top.addView(connectivity,new LinearLayout.LayoutParams(0,dp(activity,142),1f));
+        LinearLayout.LayoutParams mediaLp=new LinearLayout.LayoutParams(0,dp(activity,142),1f);
+        mediaLp.setMargins(dp(activity,10),0,0,0);
+        top.addView(media,mediaLp);
+        sheet.addView(top,new LinearLayout.LayoutParams(-1,dp(activity,142)));
+
+        airplane.setOnClickListener(v -> safeStart(activity,new Intent(Settings.ACTION_WIRELESS_SETTINGS)));
+        cellular.setOnClickListener(v -> openPanel(activity, Settings.Panel.ACTION_INTERNET_CONNECTIVITY, Settings.ACTION_DATA_ROAMING_SETTINGS));
+        wifi.setOnClickListener(v -> openPanel(activity, Settings.Panel.ACTION_INTERNET_CONNECTIVITY, Settings.ACTION_WIFI_SETTINGS));
         bluetooth.setOnClickListener(v -> safeStart(activity, new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
-
-        TextView heading = text(activity, "Control Center", 13, Color.argb(180,255,255,255));
-        heading.setPadding(dp(activity, 4), dp(activity, 13), 0, dp(activity, 4));
-        sheet.addView(heading, new LinearLayout.LayoutParams(-1, dp(activity, 38)));
 
         // Brightness
         LinearLayout bright = sliderCard(activity, "☀  Brightness");
@@ -245,10 +279,10 @@ public final class IOSSystemPanels {
 
         LinearLayout card = new LinearLayout(activity);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(activity, 12), dp(activity, 12), dp(activity, 12), dp(activity, 12));
+        card.setPadding(dp(activity, 10), dp(activity, 10), dp(activity, 10), dp(activity, 10));
         card.setBackground(glass(activity, 26, 236));
 
-        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(dp(activity, 300), -2, Gravity.CENTER);
+        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(dp(activity, 286), -2, Gravity.CENTER);
         overlay.addView(card, cp);
 
         LinearLayout head = new LinearLayout(activity);
@@ -256,20 +290,20 @@ public final class IOSSystemPanels {
 
         android.widget.ImageView iv = new android.widget.ImageView(activity);
         iv.setImageDrawable(icon);
-        head.addView(iv, new LinearLayout.LayoutParams(dp(activity, 48), dp(activity, 48)));
+        head.addView(iv, new LinearLayout.LayoutParams(dp(activity, 44), dp(activity, 44)));
 
-        TextView name = text(activity, appName, 17, Color.WHITE);
+        TextView name = text(activity, appName, 16, Color.WHITE);
         name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         name.setPadding(dp(activity, 12), 0, 0, 0);
         head.addView(name, new LinearLayout.LayoutParams(0, dp(activity, 52), 1f));
-        card.addView(head, new LinearLayout.LayoutParams(-1, dp(activity, 58)));
+        card.addView(head, new LinearLayout.LayoutParams(-1, dp(activity, 52)));
 
-        addAction(activity, card, "Open", () -> runAndDismiss(root, overlay, card, home, open));
-        addAction(activity, card, "Add to Dock", () -> runAndDismiss(root, overlay, card, home, addDock));
-        addAction(activity, card, "Customize Icon", () -> runAndDismiss(root, overlay, card, home, customize));
-        addAction(activity, card, "Hide App", () -> runAndDismiss(root, overlay, card, home, hide));
-        addAction(activity, card, "App Info", () -> runAndDismiss(root, overlay, card, home, info));
-        addAction(activity, card, "Uninstall", () -> runAndDismiss(root, overlay, card, home, uninstall));
+        addAction(activity, card, "Open", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, open));
+        addAction(activity, card, "Add to Dock", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, addDock));
+        addAction(activity, card, "Customize Icon", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
+        addAction(activity, card, "Hide from Home Screen", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, hide));
+        addAction(activity, card, "App Info", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, info));
+        addAction(activity, card, "Delete App", Color.rgb(255,69,58), () -> runAndDismiss(root, overlay, card, home, uninstall));
 
         overlay.setOnClickListener(v -> {
             if (v == overlay) dismiss(root, overlay, card, home);
@@ -282,12 +316,12 @@ public final class IOSSystemPanels {
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
-    private static void addAction(Activity a, LinearLayout parent, String label, Runnable action) {
-        TextView row = text(a, label, 15, Color.WHITE);
+    private static void addAction(Activity a, LinearLayout parent, String label, int color, Runnable action) {
+        TextView row = text(a, label, 15, color);
         row.setPadding(dp(a, 14), 0, dp(a, 14), 0);
-        row.setBackground(round(Color.argb(46,255,255,255), 14, a));
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(a, 48));
-        rp.setMargins(0, dp(a, 5), 0, 0);
+        row.setBackground(round(Color.argb(34,255,255,255), 13, a));
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(a, 43));
+        rp.setMargins(0, dp(a, 4), 0, 0);
         parent.addView(row, rp);
         row.setOnClickListener(v -> action.run());
     }
@@ -320,6 +354,14 @@ public final class IOSSystemPanels {
         SeekBar seek = new SeekBar(a);
         card.addView(seek, new LinearLayout.LayoutParams(-1, dp(a, 42)));
         return card;
+    }
+
+    private static TextView miniTile(Activity a, String symbol, String label, boolean active) {
+        TextView v = text(a, symbol + "\n" + label, 11, Color.WHITE);
+        v.setGravity(Gravity.CENTER);
+        v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        v.setBackground(round(active ? Color.rgb(48,130,246) : Color.rgb(75,77,84), 18, a));
+        return v;
     }
 
     private static TextView tile(Activity a, String text, boolean active) {

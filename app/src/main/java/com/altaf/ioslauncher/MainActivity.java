@@ -673,7 +673,7 @@ public class MainActivity extends Activity {
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView title = title("Customize");
+        TextView title = title("Settings");
         title.setGravity(Gravity.CENTER_VERTICAL);
         titleRow.addView(title,new LinearLayout.LayoutParams(0,dp(44),1f));
 
@@ -686,7 +686,7 @@ public class MainActivity extends Activity {
         panel.addView(titleRow,new LinearLayout.LayoutParams(-1,dp(48)));
 
         LinearLayout themeCard = group();
-        themeCard.addView(groupTitle("Wallpaper & Theme"));
+        themeCard.addView(groupTitle("Appearance"));
         LinearLayout themeRow1 = chipRow();
         addThemeChip(themeRow1,"System","SYSTEM",dialog);
         addThemeChip(themeRow1,"iOS Blue","BLUE",dialog);
@@ -817,7 +817,7 @@ public class MainActivity extends Activity {
         addCard(panel,appCard);
 
         LinearLayout phoneCard = group();
-        phoneCard.addView(groupTitle("Phone Settings"));
+        phoneCard.addView(groupTitle("Phone"));
 
         TextView wifiSettings = settingsRow("Wi‑Fi","Networks & internet");
         phoneCard.addView(wifiSettings,new LinearLayout.LayoutParams(-1,dp(58)));

@@ -539,13 +539,8 @@ public class MainActivity extends Activity {
         }
         panel.addView(suggestionRow,new LinearLayout.LayoutParams(-1,dp(82)));
 
-        TextView appsTitle = text("APPS", 11, Color.argb(165,255,255,255));
-        appsTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        appsTitle.setPadding(dp(3), dp(4), 0, dp(4));
-        panel.addView(appsTitle, new LinearLayout.LayoutParams(-1, dp(31)));
-
         searchGrid = new GridView(this);
-        searchGrid.setNumColumns(4);
+        searchGrid.setNumColumns(1);
         searchGrid.setVerticalSpacing(dp(14));
         searchGrid.setHorizontalSpacing(dp(5));
         searchGrid.setPadding(0,dp(8),0,dp(8));
@@ -555,6 +550,7 @@ public class MainActivity extends Activity {
         searchGrid.setOverScrollMode(View.OVER_SCROLL_NEVER);
         searchAdapter = new SearchAdapter();
         searchGrid.setAdapter(searchAdapter);
+        searchGrid.setVisibility(View.GONE);
         panel.addView(searchGrid,new LinearLayout.LayoutParams(-1,0,1f));
 
         searchOverlay.addView(panel,new FrameLayout.LayoutParams(-1,-1));
@@ -613,9 +609,18 @@ public class MainActivity extends Activity {
     private void filterSearch(String text) {
         String q = text.trim().toLowerCase(Locale.ROOT);
         searchApps.clear();
-        for (AppItem a : visibleApps) {
-            if (q.isEmpty() || a.label.toLowerCase(Locale.ROOT).contains(q)) searchApps.add(a);
+
+        if (q.isEmpty()) {
+            searchGrid.setVisibility(View.GONE);
+            searchAdapter.notifyDataSetChanged();
+            return;
         }
+
+        for (AppItem a : visibleApps) {
+            if (a.label.toLowerCase(Locale.ROOT).contains(q)) searchApps.add(a);
+        }
+
+        searchGrid.setVisibility(View.VISIBLE);
         searchAdapter.notifyDataSetChanged();
     }
 
@@ -714,12 +719,12 @@ public class MainActivity extends Activity {
         cornerValue.setPadding(dp(10),dp(4),dp(10),0);
         layoutCard.addView(cornerValue,new LinearLayout.LayoutParams(-1,dp(32)));
         SeekBar cornerSeek = new SeekBar(this);
-        cornerSeek.setMax(24);
-        cornerSeek.setProgress(Math.max(0,Math.min(24,iconCornerDp)));
+        cornerSeek.setMax(8);
+        cornerSeek.setProgress(Math.max(0,Math.min(8,iconCornerDp-14)));
         layoutCard.addView(cornerSeek,new LinearLayout.LayoutParams(-1,dp(46)));
         cornerSeek.setOnSeekBarChangeListener(new SimpleSeek() {
             public void onProgressChanged(SeekBar s,int p,boolean f) {
-                iconCornerDp=p;
+                iconCornerDp=14+p;
                 cornerValue.setText("Icon Corner  •  " + iconCornerDp + " dp");
                 prefs.edit().putInt("icon_corner_dp",iconCornerDp).apply();
             }
@@ -1095,7 +1100,7 @@ public class MainActivity extends Activity {
 
     private Drawable displayIcon(AppItem app) {
         Drawable base = IconPackManager.iconFor(this,iconPackPackage,app.component,app.icon);
-        float ratio = Math.max(.16f, Math.min(.36f, iconCornerDp / 64f));
+        float ratio = Math.max(.24f, Math.min(.32f, iconCornerDp / 64f));
         return new IOSIconDrawable(base, ratio);
     }
 
@@ -1525,22 +1530,30 @@ public class MainActivity extends Activity {
 
         public View getView(int p,View old,ViewGroup parent){
             AppItem app=searchApps.get(p);
-            LinearLayout box=new LinearLayout(MainActivity.this);
-            box.setOrientation(LinearLayout.VERTICAL);
-            box.setGravity(Gravity.CENTER);
+
+            LinearLayout row=new LinearLayout(MainActivity.this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(12),dp(5),dp(12),dp(5));
+            row.setBackground(round(Color.argb(74,255,255,255),18));
 
             ImageView icon=new ImageView(MainActivity.this);
             icon.setImageDrawable(displayIcon(app));
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             styleIcon(icon);
-            int s=columns==5?48:56;
-            box.addView(icon,new LinearLayout.LayoutParams(dp(s),dp(s)));
+            row.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
 
-            TextView label=text(app.label,10,Color.WHITE);
-            label.setGravity(Gravity.CENTER);
-            label.setSingleLine(true);
-            box.addView(label,new LinearLayout.LayoutParams(-1,dp(24)));
-            return box;
+            TextView label=text(app.label,15,Color.WHITE);
+            label.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+            label.setPadding(dp(12),0,0,0);
+            row.addView(label,new LinearLayout.LayoutParams(0,dp(56),1f));
+
+            TextView arrow=text("›",24,Color.argb(170,255,255,255));
+            arrow.setGravity(Gravity.CENTER);
+            row.addView(arrow,new LinearLayout.LayoutParams(dp(30),dp(56)));
+
+            GridView.LayoutParams gp=new GridView.LayoutParams(-1,dp(64));
+            row.setLayoutParams(gp);
+            return row;
         }
     }
 

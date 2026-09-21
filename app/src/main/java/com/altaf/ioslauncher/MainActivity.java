@@ -1168,7 +1168,7 @@ public class MainActivity extends Activity {
     private Drawable displayIcon(AppItem app) {
         Drawable base = IconPackManager.iconFor(this,iconPackPackage,app.component,app.icon);
         float ratio = Math.max(.24f, Math.min(.32f, iconCornerDp / 64f));
-        return new IOSIconDrawable(base, ratio);
+        return new IOSIconDrawable(base, ratio, app.label + " " + app.component.getPackageName());
     }
 
     private void styleIcon(ImageView icon) {

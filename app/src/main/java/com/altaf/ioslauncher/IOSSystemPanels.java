@@ -118,21 +118,26 @@ public final class IOSSystemPanels {
             brightness.setMax(255);
             brightness.setProgress(current);
         } catch (Exception ignored) {}
+        brightness.setOnTouchListener((v,e) -> {
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
         brightness.setOnSeekBarChangeListener(new SimpleSeek() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (!fromUser) return;
+
+                // Always change the current launcher window immediately.
+                try {
+                    android.view.WindowManager.LayoutParams lp = activity.getWindow().getAttributes();
+                    lp.screenBrightness = Math.max(.02f, Math.min(1f, progress / 255f));
+                    activity.getWindow().setAttributes(lp);
+                } catch (Exception ignored) {}
+
+                // Persist system-wide only when Android has granted write-settings access.
                 if (Settings.System.canWrite(activity)) {
                     try {
-                        Settings.System.putInt(activity.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, Math.max(5, progress));
-                    } catch (Exception ignored) {}
-                }
-            }
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {
-                if (!Settings.System.canWrite(activity)) {
-                    try {
-                        Intent i = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                                Uri.parse("package:" + activity.getPackageName()));
-                        activity.startActivity(i);
+                        Settings.System.putInt(activity.getContentResolver(),
+                                Settings.System.SCREEN_BRIGHTNESS, Math.max(5, progress));
                     } catch (Exception ignored) {}
                 }
             }
@@ -146,9 +151,16 @@ public final class IOSSystemPanels {
         int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         volume.setMax(max);
         volume.setProgress(am.getStreamVolume(AudioManager.STREAM_MUSIC));
+        volume.setOnTouchListener((v,e) -> {
+            v.getParent().requestDisallowInterceptTouchEvent(true);
+            return false;
+        });
         volume.setOnSeekBarChangeListener(new SimpleSeek() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) am.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+                if (!fromUser) return;
+                try {
+                    am.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+                } catch (Exception ignored) {}
             }
         });
         sheet.addView(volumeCard, cardParams(activity));
@@ -164,10 +176,9 @@ public final class IOSSystemPanels {
         sheet.addView(bottom, new LinearLayout.LayoutParams(-1, dp(activity, 84)));
 
         settings.setOnClickListener(v -> runAndDismiss(root, overlay, sheet, home, settingsAction));
-        notify.setOnClickListener(v -> {
-            dismiss(root, overlay, sheet, home);
-            showNotificationCenter(activity, root, home, haptics);
-        });
+        notify.setOnClickListener(v ->
+                runAndDismiss(root, overlay, sheet, home,
+                        () -> showNotificationCenter(activity, root, home, haptics)));
 
         overlay.setOnClickListener(v -> {
             if (v == overlay) dismiss(root, overlay, sheet, home);
@@ -210,10 +221,21 @@ public final class IOSSystemPanels {
         date.setGravity(Gravity.CENTER);
         sheet.addView(date, new LinearLayout.LayoutParams(-1, dp(activity, 36)));
 
+        LinearLayout notificationTitleRow = new LinearLayout(activity);
+        notificationTitleRow.setGravity(Gravity.CENTER_VERTICAL);
+        notificationTitleRow.setPadding(dp(activity,4),dp(activity,12),dp(activity,4),dp(activity,4));
+
         TextView title = text(activity, "Notification Center", 16, Color.WHITE);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        title.setPadding(dp(activity, 4), dp(activity, 18), 0, dp(activity, 8));
-        sheet.addView(title, new LinearLayout.LayoutParams(-1, dp(activity, 54)));
+        notificationTitleRow.addView(title,new LinearLayout.LayoutParams(0,dp(activity,46),1f));
+
+        TextView clear = text(activity, "Clear", 14, Color.rgb(100,175,255));
+        clear.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        clear.setGravity(Gravity.CENTER);
+        clear.setBackground(round(Color.argb(55,255,255,255),15,activity));
+        notificationTitleRow.addView(clear,new LinearLayout.LayoutParams(dp(activity,72),dp(activity,36)));
+
+        sheet.addView(notificationTitleRow, new LinearLayout.LayoutParams(-1, dp(activity,58)));
 
         ScrollView scroll = new ScrollView(activity);
         scroll.setVerticalScrollBarEnabled(false);
@@ -221,6 +243,18 @@ public final class IOSSystemPanels {
         list.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
         sheet.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        clear.setOnClickListener(v -> {
+            boolean cleared = IOSNotificationService.clearAll();
+            if (cleared) {
+                list.removeAllViews();
+                list.addView(notificationCard(activity, "No New Notifications", "You're all caught up."),
+                        cardParams(activity));
+                if (haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            } else {
+                safeStart(activity, new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
+            }
+        });
 
         if (!IOSNotificationService.isEnabled(activity)) {
             LinearLayout card = notificationCard(activity, "Notification Access",

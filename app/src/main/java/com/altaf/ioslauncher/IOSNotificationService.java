@@ -36,11 +36,19 @@ public class IOSNotificationService extends NotificationListenerService {
     }
 
     private static final List<Item> ITEMS = new ArrayList<>();
+    private static volatile IOSNotificationService INSTANCE;
 
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
+        INSTANCE = this;
         rebuild();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (INSTANCE == this) INSTANCE = null;
+        super.onDestroy();
     }
 
     @Override
@@ -110,6 +118,20 @@ public class IOSNotificationService extends NotificationListenerService {
     public static List<Item> snapshot() {
         synchronized (ITEMS) {
             return new ArrayList<>(ITEMS);
+        }
+    }
+
+    public static boolean clearAll() {
+        IOSNotificationService service = INSTANCE;
+        if (service == null) return false;
+        try {
+            service.cancelAllNotifications();
+            synchronized (ITEMS) {
+                ITEMS.clear();
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

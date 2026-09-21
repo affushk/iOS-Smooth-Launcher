@@ -855,7 +855,7 @@ public class MainActivity extends Activity {
         phoneCard.addView(notificationSettings,new LinearLayout.LayoutParams(-1,dp(58)));
         notificationSettings.setOnClickListener(v -> {
             dialog.dismiss();
-            try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_SETTINGS)); } catch(Exception ignored) {}
+            try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)); } catch(Exception ignored) {}
         });
 
         addCard(panel,phoneCard);

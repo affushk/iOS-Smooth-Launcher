@@ -96,6 +96,7 @@ public class MainActivity extends Activity {
 
     private float touchDownX;
     private float touchDownY;
+    private boolean gestureConsumed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,28 +129,50 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+        int action = ev.getActionMasked();
+
+        if (action == MotionEvent.ACTION_DOWN) {
             touchDownX = ev.getX();
             touchDownY = ev.getY();
-        } else if (ev.getAction() == MotionEvent.ACTION_UP
-                && !editMode
-                && searchOverlay != null
-                && searchOverlay.getVisibility() != View.VISIBLE) {
-            float dx = ev.getX() - touchDownX;
-            float dy = ev.getY() - touchDownY;
+            gestureConsumed = false;
+            return super.dispatchTouchEvent(ev);
+        }
 
-            if (dy > dp(78) && Math.abs(dx) < dp(115)) {
-                if (touchDownY < dp(82)) {
-                    if (touchDownX > getResources().getDisplayMetrics().widthPixels * .58f) {
-                        IOSSystemPanels.showControlCenter(this, root, content, haptics, this::showSettings);
-                    } else {
-                        IOSSystemPanels.showNotificationCenter(this, root, content, haptics);
-                    }
+        float dx = ev.getX() - touchDownX;
+        float dy = ev.getY() - touchDownY;
+
+        // Only the very top edge can open system panels.
+        boolean topEdgeStart = touchDownY <= dp(42);
+        boolean verticalPull = dy > dp(34) && Math.abs(dx) < dp(90);
+
+        if (action == MotionEvent.ACTION_MOVE && !gestureConsumed && !editMode
+                && topEdgeStart && verticalPull) {
+            gestureConsumed = true;
+
+            // Cancel the app-icon touch before it can become a click.
+            MotionEvent cancel = MotionEvent.obtain(ev);
+            cancel.setAction(MotionEvent.ACTION_CANCEL);
+            super.dispatchTouchEvent(cancel);
+            cancel.recycle();
+            return true;
+        }
+
+        if (action == MotionEvent.ACTION_UP && gestureConsumed) {
+            if (dy > dp(105)) {
+                if (touchDownX > getResources().getDisplayMetrics().widthPixels * .58f) {
+                    IOSSystemPanels.showControlCenter(this, root, content, haptics, this::showSettings);
                 } else {
-                    showSearch();
+                    IOSSystemPanels.showNotificationCenter(this, root, content, haptics);
                 }
             }
+            gestureConsumed = false;
+            return true;
         }
+
+        if (action == MotionEvent.ACTION_CANCEL) {
+            gestureConsumed = false;
+        }
+
         return super.dispatchTouchEvent(ev);
     }
 
@@ -792,6 +815,50 @@ public class MainActivity extends Activity {
         appCard.addView(hiddenRow,new LinearLayout.LayoutParams(-1,dp(58)));
         hiddenRow.setOnClickListener(v -> showHiddenApps(dialog));
         addCard(panel,appCard);
+
+        LinearLayout phoneCard = group();
+        phoneCard.addView(groupTitle("Phone Settings"));
+
+        TextView wifiSettings = settingsRow("Wi‑Fi","Networks & internet");
+        phoneCard.addView(wifiSettings,new LinearLayout.LayoutParams(-1,dp(58)));
+        wifiSettings.setOnClickListener(v -> {
+            dialog.dismiss();
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q)
+                    startActivity(new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY));
+                else startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+            } catch(Exception ignored) {}
+        });
+
+        TextView btSettings = settingsRow("Bluetooth","Devices & connections");
+        phoneCard.addView(btSettings,new LinearLayout.LayoutParams(-1,dp(58)));
+        btSettings.setOnClickListener(v -> {
+            dialog.dismiss();
+            try { startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)); } catch(Exception ignored) {}
+        });
+
+        TextView displaySettings = settingsRow("Display & Brightness","Brightness and screen");
+        phoneCard.addView(displaySettings,new LinearLayout.LayoutParams(-1,dp(58)));
+        displaySettings.setOnClickListener(v -> {
+            dialog.dismiss();
+            try { startActivity(new Intent(Settings.ACTION_DISPLAY_SETTINGS)); } catch(Exception ignored) {}
+        });
+
+        TextView soundSettings = settingsRow("Sounds & Haptics","Volume and sound");
+        phoneCard.addView(soundSettings,new LinearLayout.LayoutParams(-1,dp(58)));
+        soundSettings.setOnClickListener(v -> {
+            dialog.dismiss();
+            try { startActivity(new Intent(Settings.ACTION_SOUND_SETTINGS)); } catch(Exception ignored) {}
+        });
+
+        TextView notificationSettings = settingsRow("Notifications","Notification access & settings");
+        phoneCard.addView(notificationSettings,new LinearLayout.LayoutParams(-1,dp(58)));
+        notificationSettings.setOnClickListener(v -> {
+            dialog.dismiss();
+            try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_SETTINGS)); } catch(Exception ignored) {}
+        });
+
+        addCard(panel,phoneCard);
 
         LinearLayout systemCard = group();
         systemCard.addView(groupTitle("System"));

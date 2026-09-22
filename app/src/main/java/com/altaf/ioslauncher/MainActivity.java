@@ -254,11 +254,12 @@ public class MainActivity extends Activity {
         if (editMode) attachEditBar();
 
         root.setAlpha(0f);
-        root.setScaleX(.99f);
-        root.setScaleY(.99f);
+        root.setScaleX(.965f);
+        root.setScaleY(.965f);
+        root.setTranslationY(dp(8));
         root.animate()
-                .alpha(1f).scaleX(1f).scaleY(1f)
-                .setDuration(280)
+                .alpha(1f).scaleX(1f).scaleY(1f).translationY(0)
+                .setDuration(360)
                 .setInterpolator(new DecelerateInterpolator())
                 .start();
     }
@@ -433,6 +434,7 @@ public class MainActivity extends Activity {
                 if (!editMode) openApp(app, icon);
             });
             slot.setOnLongClickListener(v -> {
+                slot.animate().scaleX(.90f).scaleY(.90f).setDuration(90).withEndAction(() -> slot.animate().scaleX(1f).scaleY(1f).setDuration(150).start()).start();
                 showAppActions(app);
                 return true;
             });
@@ -474,6 +476,7 @@ public class MainActivity extends Activity {
             if (!editMode) openApp(app, icon);
         });
         wrapper.setOnLongClickListener(v -> {
+            wrapper.animate().scaleX(.90f).scaleY(.90f).setDuration(90).withEndAction(() -> wrapper.animate().scaleX(1f).scaleY(1f).setDuration(150).start()).start();
             showAppActions(app);
             return true;
         });
@@ -489,7 +492,7 @@ public class MainActivity extends Activity {
             minus.setOnClickListener(v -> hideApp(app));
 
             ObjectAnimator jiggle = ObjectAnimator.ofFloat(box, "rotation", -0.7f, 0.7f);
-            jiggle.setDuration(125);
+            jiggle.setDuration(105);
             jiggle.setRepeatCount(ValueAnimator.INFINITE);
             jiggle.setRepeatMode(ValueAnimator.REVERSE);
             jiggle.start();

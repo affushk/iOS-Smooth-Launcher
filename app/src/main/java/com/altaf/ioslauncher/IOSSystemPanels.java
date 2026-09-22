@@ -333,8 +333,10 @@ public final class IOSSystemPanels {
         card.addView(head, new LinearLayout.LayoutParams(-1, dp(activity, 52)));
 
         addAction(activity, card, "Open", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, open));
+        addAction(activity, card, "Move App", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
         addAction(activity, card, "Add to Dock", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, addDock));
         addAction(activity, card, "Customize Icon", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
+        addAction(activity, card, "Edit Home Screen", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
         addAction(activity, card, "Hide from Home Screen", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, hide));
         addAction(activity, card, "App Info", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, info));
         addAction(activity, card, "Delete App", Color.rgb(255,69,58), () -> runAndDismiss(root, overlay, card, home, uninstall));
@@ -343,10 +345,11 @@ public final class IOSSystemPanels {
             if (v == overlay) dismiss(root, overlay, card, home);
         });
 
-        card.setScaleX(.92f);
-        card.setScaleY(.92f);
+        card.setScaleX(.82f);
+        card.setScaleY(.82f);
+        card.setTranslationY(dp(activity,18));
         card.setAlpha(0f);
-        card.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(220)
+        card.animate().scaleX(1f).scaleY(1f).translationY(0).alpha(1f).setDuration(260)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 

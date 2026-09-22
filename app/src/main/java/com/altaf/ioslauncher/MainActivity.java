@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
     private boolean showLabels;
     private boolean haptics;
     private boolean showDateWidget;
+    private boolean designerMode;
     private String theme;
 
     private float touchDownX;
@@ -192,6 +193,7 @@ public class MainActivity extends Activity {
         showLabels = prefs.getBoolean("labels", true);
         haptics = prefs.getBoolean("haptics", true);
         showDateWidget = prefs.getBoolean("date_widget", false);
+        designerMode = prefs.getBoolean("designer_mode", true);
         glassAlpha = prefs.getInt("glass_alpha", 70);
         iconCornerDp = prefs.getInt("icon_corner_dp", 14);
         iconPackPackage = prefs.getString("icon_pack", "");
@@ -237,6 +239,7 @@ public class MainActivity extends Activity {
 
         buildStatusBar();
         if (showDateWidget) buildDateCard();
+        if (designerMode) buildDesignerBar();
         buildPager();
         buildSearchPill();
         buildDock();
@@ -304,6 +307,61 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(190), dp(58));
         lp.setMargins(0, dp(5), 0, dp(7));
         content.addView(card, lp);
+    }
+
+    private void buildDesignerBar() {
+        LinearLayout card = new LinearLayout(this);
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(dp(7),dp(5),dp(7),dp(5));
+        card.setBackground(glassRound(22));
+        String[] names={"Gallery","Files","Camera","Colors"};
+        String[] keys={"gallery","files","camera","colors"};
+        for(int i=0;i<names.length;i++){
+            final String key=keys[i];
+            TextView b=text(names[i],11,Color.WHITE);
+            b.setGravity(Gravity.CENTER);
+            b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+            card.addView(b,new LinearLayout.LayoutParams(0,dp(38),1f));
+            b.setOnClickListener(v -> openDesignerTool(key));
+        }
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(48));
+        lp.setMargins(0,dp(3),0,dp(5));
+        content.addView(card,lp);
+    }
+
+    private void openDesignerTool(String key) {
+        try {
+            if ("gallery".equals(key)) {
+                Intent i=new Intent(Intent.ACTION_VIEW);
+                i.setType("image/*");
+                startActivity(Intent.createChooser(i,"Choose Gallery"));
+            } else if ("files".equals(key)) {
+                Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                i.setType("*/*"); i.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivityForResult(i,701);
+            } else if ("camera".equals(key)) {
+                Intent i=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivity(i);
+            } else {
+                showColorPalette();
+            }
+        } catch(Exception e) { Toast.makeText(this,"App available nahi hai",Toast.LENGTH_SHORT).show(); }
+    }
+
+    private void showColorPalette() {
+        final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL);
+        p.setPadding(dp(18),dp(16),dp(18),dp(18)); p.setBackground(round(Color.rgb(24,26,34),24));
+        TextView h=title("Textile Quick Colors"); p.addView(h,new LinearLayout.LayoutParams(-1,dp(48)));
+        String[][] colors={{"Navy","#14213D"},{"Maroon","#7A1F35"},{"Petrol","#0F4C5C"},{"Bottle Green","#174A3A"},{"Rust","#A14D2A"},{"Mustard","#C99720"},{"Ivory","#F3EBDD"},{"Black","#111111"}};
+        for(String[] x:colors){
+            TextView row=settingsRow(x[0],x[1]+"  • tap to copy");
+            row.setBackground(round(Color.parseColor(x[1]),16)); p.addView(row,new LinearLayout.LayoutParams(-1,dp(54)));
+            row.setOnClickListener(v->{ android.content.ClipboardManager cm=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE); cm.setPrimaryClip(android.content.ClipData.newPlainText("Textile color",x[1])); Toast.makeText(this,x[1]+" copied",Toast.LENGTH_SHORT).show(); });
+        }
+        d.setContentView(p); Window w=d.getWindow(); if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);}
+        d.setOnShowListener(x->{Window ww=d.getWindow();if(ww!=null)ww.setLayout(WindowManager.LayoutParams.MATCH_PARENT,(int)(getResources().getDisplayMetrics().heightPixels*.72f));});
+        d.show();
     }
 
     private void buildPager() {
@@ -770,7 +828,25 @@ public class MainActivity extends Activity {
             rebuildAfterSettings(dialog);
         });
 
+        Switch designer = switchRow("Designer Workspace",designerMode);
+        layoutCard.addView(designer,new LinearLayout.LayoutParams(-1,dp(50)));
+        designer.setOnCheckedChangeListener((b,checked) -> {
+            designerMode=checked;
+            prefs.edit().putBoolean("designer_mode",checked).apply();
+            rebuildAfterSettings(dialog);
+        });
+
         addCard(panel,layoutCard);
+
+        LinearLayout designerCard=group();
+        designerCard.addView(groupTitle("Designer Tools"));
+        TextView paletteRow=settingsRow("Textile Quick Colors","Navy, maroon, petrol, rust & more");
+        designerCard.addView(paletteRow,new LinearLayout.LayoutParams(-1,dp(58)));
+        paletteRow.setOnClickListener(v->{ dialog.dismiss(); showColorPalette(); });
+        TextView filesRow=settingsRow("Open Design File","Quick access to artwork and references");
+        designerCard.addView(filesRow,new LinearLayout.LayoutParams(-1,dp(58)));
+        filesRow.setOnClickListener(v->{ dialog.dismiss(); openDesignerTool("files"); });
+        addCard(panel,designerCard);
 
         LinearLayout appearanceCard = group();
         appearanceCard.addView(groupTitle("Appearance & Touch"));

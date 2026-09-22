@@ -10,8 +10,8 @@ android {
         applicationId = "com.altaf.ioslauncher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "9.0.0"
+        versionCode = 10
+        versionName = "10.0.0"
     }
 
     compileOptions {

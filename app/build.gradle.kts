@@ -7,11 +7,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.altaf.ioslauncher.v12"
+        applicationId = "com.altaf.designerhome"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12
-        versionName = "12.0.0"
+        versionCode = 13
+        versionName = "13.0.0"
     }
 
     compileOptions {

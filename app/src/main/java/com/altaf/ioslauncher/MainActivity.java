@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.content.ClipData;
 import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,6 +28,7 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
+import android.view.DragEvent;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -81,6 +83,7 @@ public class MainActivity extends Activity {
 
     private final Set<String> hiddenSet = new HashSet<>();
     private boolean editMode = false;
+    private AppItem draggingApp = null;
 
     private int columns;
     private int rows;
@@ -216,6 +219,7 @@ public class MainActivity extends Activity {
             installedApps.add(new AppItem(label, c, r.loadIcon(pm)));
         }
         Collections.sort(installedApps, Comparator.comparing(a -> a.label.toLowerCase(Locale.ROOT)));
+        applySavedHomeOrder();
         refreshVisibleApps();
     }
 
@@ -226,6 +230,41 @@ public class MainActivity extends Activity {
         }
         searchApps.clear();
         searchApps.addAll(visibleApps);
+    }
+
+    private void applySavedHomeOrder() {
+        String saved = prefs.getString("home_order", "");
+        if (saved.isEmpty()) return;
+        final ArrayList<String> order = new ArrayList<>();
+        for (String s : saved.split("\\|")) if (!s.isEmpty()) order.add(s);
+        Collections.sort(installedApps, (a,b) -> {
+            int ia=order.indexOf(key(a)), ib=order.indexOf(key(b));
+            if (ia<0 && ib<0) return a.label.compareToIgnoreCase(b.label);
+            if (ia<0) return 1;
+            if (ib<0) return -1;
+            return Integer.compare(ia,ib);
+        });
+    }
+
+    private void saveHomeOrder() {
+        StringBuilder sb=new StringBuilder();
+        for (AppItem a:visibleApps) {
+            if (sb.length()>0) sb.append("|");
+            sb.append(key(a));
+        }
+        prefs.edit().putString("home_order",sb.toString()).apply();
+    }
+
+    private void moveApp(AppItem from, AppItem to) {
+        int a=visibleApps.indexOf(from), b=visibleApps.indexOf(to);
+        if(a<0 || b<0 || a==b) return;
+        visibleApps.remove(a);
+        if (b > visibleApps.size()) b=visibleApps.size();
+        visibleApps.add(b,from);
+        saveHomeOrder();
+        if(pager!=null && pager.getAdapter()!=null) pager.getAdapter().notifyDataSetChanged();
+        rebuildDots(pager==null?0:pager.getCurrentItem());
+        if(haptics && root!=null) root.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
     }
 
     private void buildLauncher() {
@@ -477,7 +516,34 @@ public class MainActivity extends Activity {
         });
         wrapper.setOnLongClickListener(v -> {
             wrapper.animate().scaleX(.90f).scaleY(.90f).setDuration(90).withEndAction(() -> wrapper.animate().scaleX(1f).scaleY(1f).setDuration(150).start()).start();
-            showAppActions(app);
+            if (editMode) {
+                draggingApp=app;
+                ClipData data=ClipData.newPlainText("app",key(app));
+                v.startDragAndDrop(data,new View.DragShadowBuilder(v),app,0);
+                v.setAlpha(.45f);
+            } else {
+                showAppActions(app);
+            }
+            return true;
+        });
+        wrapper.setOnDragListener((v,event) -> {
+            switch(event.getAction()) {
+                case DragEvent.ACTION_DRAG_ENTERED:
+                    v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(90).start();
+                    return true;
+                case DragEvent.ACTION_DRAG_EXITED:
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(90).start();
+                    return true;
+                case DragEvent.ACTION_DROP:
+                    Object state=event.getLocalState();
+                    if(state instanceof AppItem) moveApp((AppItem)state,app);
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(90).start();
+                    return true;
+                case DragEvent.ACTION_DRAG_ENDED:
+                    v.setAlpha(1f);
+                    draggingApp=null;
+                    return true;
+            }
             return true;
         });
 
@@ -1412,7 +1478,10 @@ public class MainActivity extends Activity {
                 displayIcon(app),
                 () -> openApp(app, root),
                 () -> addAppToDock(app),
-                this::showSettings,
+                () -> {
+                    enterEditMode();
+                    Toast.makeText(this,"Icon ko long-press karke drag karo",Toast.LENGTH_SHORT).show();
+                },
                 () -> hideApp(app),
                 () -> openAppInfo(app),
                 () -> uninstallApp(app),

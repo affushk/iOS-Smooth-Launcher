@@ -111,6 +111,29 @@ public class MainActivity extends Activity {
         loadPreferences();
         loadApps();
         buildLauncher();
+        handleGlobalPanelIntent(getIntent());
+    }
+
+    @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); setIntent(intent); handleGlobalPanelIntent(intent); }
+
+    private void handleGlobalPanelIntent(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra("open_global_panel", false)) return;
+        intent.removeExtra("open_global_panel");
+        root.postDelayed(() -> {
+            String side = intent.getStringExtra("panel_side");
+            if ("control".equals(side)) IOSSystemPanels.showControlCenter(this, root, content, haptics, this::showSettings);
+            else IOSSystemPanels.showNotificationCenter(this, root, content, haptics);
+        }, 120);
+    }
+
+    private void enableGlobalPanels() {
+        if (android.os.Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {
+            startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())));
+            Toast.makeText(this, "Display over other apps allow karke wapas aaye", Toast.LENGTH_LONG).show();
+            return;
+        }
+        startService(new Intent(this, GlobalPanelService.class));
+        Toast.makeText(this, "Global swipe panel enabled", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -1031,6 +1054,10 @@ public class MainActivity extends Activity {
                 startActivity(Intent.createChooser(i,"Choose Home app"));
             }
         }));
+
+        TextView globalPanel = settingsRow("Global Swipe Panel", "Other apps ke upar top-edge swipe");
+        systemCard.addView(globalPanel, new LinearLayout.LayoutParams(-1, dp(58)));
+        globalPanel.setOnClickListener(v -> { dialog.dismiss(); enableGlobalPanels(); });
 
         addCard(panel,systemCard);
 

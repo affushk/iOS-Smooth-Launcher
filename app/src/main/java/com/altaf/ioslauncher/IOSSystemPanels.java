@@ -319,7 +319,7 @@ public final class IOSSystemPanels {
 
     public static void showAppActions(Activity activity, FrameLayout root, View home,
                                       String appName, Drawable icon,
-                                      Runnable open, Runnable addDock, Runnable customize,
+                                      Runnable open, Runnable addDock, Runnable customize, Runnable exportApk,
                                       Runnable hide, Runnable info, Runnable uninstall,
                                       boolean haptics) {
         if (haptics) root.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
@@ -353,6 +353,7 @@ public final class IOSSystemPanels {
         addAction(activity, card, "Open", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, open));
         addAction(activity, card, "Move App", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
         addAction(activity, card, "Add to Dock", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, addDock));
+        addAction(activity, card, "Export / Share APK", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, exportApk));
         addAction(activity, card, "Customize Icon", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
         addAction(activity, card, "Edit Home Screen", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, customize));
         addAction(activity, card, "Hide from Home Screen", Color.WHITE, () -> runAndDismiss(root, overlay, card, home, hide));

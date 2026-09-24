@@ -1491,11 +1491,15 @@ public class MainActivity extends Activity {
         String pkg = app.component.getPackageName().toLowerCase(Locale.ROOT);
         String lbl = app.label.toLowerCase(Locale.ROOT);
 
-        // Keep normal launcher settings inside our iOS-style Settings hub.
+        // Route key system apps into Altaf AMOLED surfaces.
         if ("settings".equals(lbl) || pkg.contains("settings")) {
-            press(pressed);
-            showSettings();
-            return;
+            press(pressed); showSettings(); return;
+        }
+        if (lbl.equals("phone") || lbl.contains("dialer") || pkg.contains("dialer")) {
+            press(pressed); showQuickDialer(); return;
+        }
+        if (lbl.contains("message") || lbl.equals("sms") || pkg.contains("messag")) {
+            press(pressed); openMessagesHub(); return;
         }
 
         if(haptics) pressed.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);

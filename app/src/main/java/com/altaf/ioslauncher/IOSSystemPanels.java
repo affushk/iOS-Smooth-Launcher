@@ -297,19 +297,31 @@ public final class IOSSystemPanels {
         sheet.addView(close, cp);
         close.setOnClickListener(v -> dismiss(root, overlay, sheet, home));
 
-        // Swipe up anywhere on the panel to close it smoothly.
+        // Dedicated bottom gesture handle: avoids stealing touches from notification cards/scroll.
+        TextView gestureHandle = text(activity, "━━━━", 18, Color.argb(220,255,255,255));
+        gestureHandle.setGravity(Gravity.CENTER);
+        gestureHandle.setBackground(round(Color.argb(28,255,255,255), 18, activity));
+        LinearLayout.LayoutParams ghp = new LinearLayout.LayoutParams(dp(activity, 150), dp(activity, 38));
+        ghp.gravity = Gravity.CENTER_HORIZONTAL;
+        ghp.setMargins(0, dp(activity, 8), 0, 0);
+        sheet.addView(gestureHandle, ghp);
         final float[] panelDownY = {0f};
-        sheet.setOnTouchListener((v,e) -> {
-            if (e.getActionMasked() == MotionEvent.ACTION_DOWN) panelDownY[0] = e.getRawY();
-            if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+        gestureHandle.setOnTouchListener((v,e) -> {
+            if (e.getActionMasked() == MotionEvent.ACTION_DOWN) { panelDownY[0] = e.getRawY(); return true; }
+            if (e.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                float dy = Math.min(0f, e.getRawY() - panelDownY[0]);
+                sheet.setTranslationY(dy * .72f);
+                return true;
+            }
+            if (e.getActionMasked() == MotionEvent.ACTION_UP || e.getActionMasked() == MotionEvent.ACTION_CANCEL) {
                 float dy = e.getRawY() - panelDownY[0];
-                if (dy < -dp(activity, 70)) {
+                if (dy < -dp(activity, 52)) {
                     if (haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                     dismissUp(root, overlay, sheet, home);
-                    return true;
-                }
+                } else sheet.animate().translationY(0).setDuration(180).setInterpolator(new DecelerateInterpolator()).start();
+                return true;
             }
-            return false;
+            return true;
         });
 
         sheet.setTranslationY(-dp(activity, 90));
@@ -383,24 +395,43 @@ public final class IOSSystemPanels {
     }
 
     private static void attachSwipeDismiss(Activity a, View card, LinearLayout list, String key, boolean haptics) {
-        final float[] downX={0f};
-        final float[] downY={0f};
+        final float[] downX={0f}, downY={0f};
+        final boolean[] swiping={false};
         card.setOnTouchListener((v,e) -> {
-            if(e.getActionMasked()==MotionEvent.ACTION_DOWN){ downX[0]=e.getRawX(); downY[0]=e.getRawY(); return false; }
-            float dx=e.getRawX()-downX[0], dy=e.getRawY()-downY[0];
-            if(e.getActionMasked()==MotionEvent.ACTION_MOVE && Math.abs(dx)>Math.abs(dy)){
-                v.setTranslationX(dx); v.setAlpha(Math.max(.25f,1f-Math.abs(dx)/(v.getWidth()*.9f))); return true;
-            }
-            if(e.getActionMasked()==MotionEvent.ACTION_UP && Math.abs(dx)>dp(a,72)){
-                if(haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                float target=dx<0?-Math.max(v.getWidth(),dp(a,360)):Math.max(v.getWidth(),dp(a,360));
-                v.animate().translationX(target).alpha(0f).setDuration(180).withEndAction(() -> {
-                    IOSNotificationService.clearOne(key); list.removeView(v);
-                    if(list.getChildCount()==0) list.addView(notificationCard(a,"No New Notifications","All caught up."),cardParams(a));
-                }).start(); return true;
-            }
-            if(e.getActionMasked()==MotionEvent.ACTION_UP || e.getActionMasked()==MotionEvent.ACTION_CANCEL){
-                v.animate().translationX(0).alpha(1f).setDuration(220).setInterpolator(new OvershootInterpolator(.7f)).start();
+            switch(e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX[0]=e.getRawX(); downY[0]=e.getRawY(); swiping[0]=false;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    float dx=e.getRawX()-downX[0], dy=e.getRawY()-downY[0];
+                    if(!swiping[0] && Math.abs(dx)>dp(a,10) && Math.abs(dx)>Math.abs(dy)*1.15f) {
+                        swiping[0]=true;
+                        if(v.getParent()!=null) v.getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    if(swiping[0]) {
+                        v.setTranslationX(dx);
+                        v.setAlpha(Math.max(.18f,1f-Math.abs(dx)/Math.max(1f,v.getWidth()*.72f)));
+                        return true;
+                    }
+                    if(Math.abs(dy)>dp(a,10) && v.getParent()!=null) v.getParent().requestDisallowInterceptTouchEvent(false);
+                    return false;
+                case MotionEvent.ACTION_UP:
+                    float total=e.getRawX()-downX[0];
+                    if(swiping[0] && Math.abs(total)>Math.min(dp(a,86),Math.max(dp(a,50),v.getWidth()/4))) {
+                        if(haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                        float target=total<0?-Math.max(v.getWidth(),dp(a,380)):Math.max(v.getWidth(),dp(a,380));
+                        v.animate().translationX(target).alpha(0f).setDuration(170).withEndAction(() -> {
+                            IOSNotificationService.clearOne(key); list.removeView(v);
+                            if(list.getChildCount()==0) list.addView(notificationCard(a,"No New Notifications","All caught up."),cardParams(a));
+                        }).start();
+                        return true;
+                    }
+                    if(!swiping[0] && Math.abs(total)<dp(a,12) && Math.abs(e.getRawY()-downY[0])<dp(a,12)) v.performClick();
+                    v.animate().translationX(0).alpha(1f).setDuration(180).setInterpolator(new DecelerateInterpolator()).start();
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    v.animate().translationX(0).alpha(1f).setDuration(160).start();
+                    return false;
             }
             return false;
         });

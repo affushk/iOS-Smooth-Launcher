@@ -3,6 +3,7 @@ package com.altaf.ioslauncher;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.app.role.RoleManager;
 import android.app.Dialog;
 import android.app.WallpaperManager;
 import android.content.ComponentName;
@@ -962,7 +963,19 @@ public class MainActivity extends Activity {
         addCard(panel,appCard);
 
         LinearLayout phoneCard = group();
-        phoneCard.addView(groupTitle("Phone"));
+        phoneCard.addView(groupTitle("Altaf System Hub"));
+
+        TextView dialerHub = settingsRow("Phone & Dialer","AMOLED quick dial + contacts");
+        phoneCard.addView(dialerHub,new LinearLayout.LayoutParams(-1,dp(58)));
+        dialerHub.setOnClickListener(v -> { dialog.dismiss(); showQuickDialer(); });
+
+        TextView messagesHub = settingsRow("Messages","Open messages + default SMS controls");
+        phoneCard.addView(messagesHub,new LinearLayout.LayoutParams(-1,dp(58)));
+        messagesHub.setOnClickListener(v -> { dialog.dismiss(); openMessagesHub(); });
+
+        TextView defaultsHub = settingsRow("Default Apps","Choose Phone, SMS and Home apps");
+        phoneCard.addView(defaultsHub,new LinearLayout.LayoutParams(-1,dp(58)));
+        defaultsHub.setOnClickListener(v -> { dialog.dismiss(); openDefaultApps(); });
 
         TextView wifiSettings = settingsRow("Wi‑Fi","Networks & internet");
         phoneCard.addView(wifiSettings,new LinearLayout.LayoutParams(-1,dp(58)));
@@ -1047,6 +1060,36 @@ public class MainActivity extends Activity {
         });
         dialog.show();
         animateDialogOpen(dialog);
+    }
+
+    private void showQuickDialer() {
+        final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(18),dp(18),dp(24)); p.setBackground(round(Color.rgb(10,11,15),28));
+        TextView h=title("Phone"); p.addView(h,new LinearLayout.LayoutParams(-1,dp(52)));
+        EditText number=new EditText(this); number.setHint("Enter phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.GRAY); number.setTextSize(25); number.setGravity(Gravity.CENTER); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(Color.rgb(28,31,39),18)); p.addView(number,new LinearLayout.LayoutParams(-1,dp(62)));
+        String[][] keys={{"1","2 ABC","3 DEF"},{"4 GHI","5 JKL","6 MNO"},{"7 PQRS","8 TUV","9 WXYZ"},{"*","0 +","#"}};
+        for(String[] row:keys){ LinearLayout r=new LinearLayout(this); r.setGravity(Gravity.CENTER); for(String k:row){ TextView b=text(k,21,Color.WHITE); b.setGravity(Gravity.CENTER); b.setBackground(round(Color.rgb(25,28,35),24)); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(68),1f); lp.setMargins(dp(4),dp(4),dp(4),dp(4)); r.addView(b,lp); b.setOnClickListener(v->{ String x=k.substring(0,1); number.append(x); press(v); }); } p.addView(r,new LinearLayout.LayoutParams(-1,dp(76))); }
+        TextView call=text("☎   Call",18,Color.BLACK); call.setTypeface(Typeface.DEFAULT,Typeface.BOLD); call.setGravity(Gravity.CENTER); call.setBackground(round(Color.rgb(96,196,126),24)); LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(dp(190),dp(58)); clp.gravity=Gravity.CENTER_HORIZONTAL; clp.setMargins(0,dp(12),0,0); p.addView(call,clp);
+        call.setOnClickListener(v->{ String n=number.getText().toString().trim(); if(!n.isEmpty()){ try{ startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(n)))); }catch(Exception ignored){} }});
+        d.setContentView(p); Window w=d.getWindow(); if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);} d.show(); if(w!=null)w.setLayout(-1,-2);
+    }
+
+    private void openMessagesHub() {
+        try {
+            Intent i=new Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_APP_MESSAGING); startActivity(i);
+        } catch(Exception e) {
+            try { startActivity(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:"))); } catch(Exception ignored) {}
+        }
+    }
+
+    private void openDefaultApps() {
+        try {
+            if(android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.Q) {
+                RoleManager rm=(RoleManager)getSystemService(ROLE_SERVICE);
+                if(rm!=null && rm.isRoleAvailable(RoleManager.ROLE_HOME)) startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_HOME),501);
+                else startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
+            } else startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
+        } catch(Exception e) { try{startActivity(new Intent(Settings.ACTION_SETTINGS));}catch(Exception ignored){} }
     }
 
     private LinearLayout group() {

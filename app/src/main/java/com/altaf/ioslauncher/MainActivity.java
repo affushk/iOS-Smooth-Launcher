@@ -1482,6 +1482,7 @@ public class MainActivity extends Activity {
                     enterEditMode();
                     Toast.makeText(this,"Icon ko long-press karke drag karo",Toast.LENGTH_SHORT).show();
                 },
+                () -> exportApk(app),
                 () -> hideApp(app),
                 () -> openAppInfo(app),
                 () -> uninstallApp(app),
@@ -1507,6 +1508,30 @@ public class MainActivity extends Activity {
         prefs.edit().putString("dock_apps",sb.toString()).apply();
         buildLauncher();
         Toast.makeText(this,app.label+" added to Dock",Toast.LENGTH_SHORT).show();
+    }
+
+    private void exportApk(AppItem app) {
+        try {
+            android.content.pm.ApplicationInfo ai = getPackageManager().getApplicationInfo(app.component.getPackageName(), 0);
+            java.io.File src = new java.io.File(ai.sourceDir);
+            java.io.File dir = new java.io.File(getExternalCacheDir(), "exported_apks");
+            if (!dir.exists()) dir.mkdirs();
+            String safe = app.label.replaceAll("[^a-zA-Z0-9._-]", "_");
+            java.io.File out = new java.io.File(dir, safe + ".apk");
+            try (java.io.InputStream in = new java.io.FileInputStream(src);
+                 java.io.OutputStream os = new java.io.FileOutputStream(out)) {
+                byte[] buf = new byte[65536]; int n;
+                while ((n = in.read(buf)) > 0) os.write(buf, 0, n);
+            }
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName()+".files", out);
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/vnd.android.package-archive");
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "Share / Save APK"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Is app ka APK export nahi ho saka", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openAppInfo(AppItem app) {

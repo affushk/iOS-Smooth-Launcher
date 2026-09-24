@@ -481,7 +481,12 @@ public class MainActivity extends Activity {
         dock = new LinearLayout(this);
         dock.setGravity(Gravity.CENTER);
         dock.setPadding(dp(10), dp(8), dp(10), dp(8));
-        dock.setBackground(glassRound(30));
+        String ds=prefs.getString("dock_style","Glass");
+        if("Transparent".equals(ds)) dock.setBackgroundColor(Color.TRANSPARENT);
+        else if("AMOLED".equals(ds)) dock.setBackground(round(Color.argb(235,0,0,0),30));
+        else if("Outline".equals(ds)) { android.graphics.drawable.GradientDrawable gd=round(Color.argb(70,15,16,20),30); gd.setStroke(dp(1),Color.argb(120,255,255,255)); dock.setBackground(gd); }
+        else dock.setBackground(glassRound(30));
+        if(android.os.Build.VERSION.SDK_INT>=31 && "Glass".equals(ds)) dock.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(10f,10f,android.graphics.Shader.TileMode.CLAMP));
 
         for (AppItem app : chooseDockApps()) {
             FrameLayout slot = new FrameLayout(this);
@@ -840,7 +845,7 @@ public class MainActivity extends Activity {
         themeCard.addView(groupTitle("Appearance"));
         LinearLayout themeRow1 = chipRow();
         addThemeChip(themeRow1,"System","SYSTEM",dialog);
-        addThemeChip(themeRow1,"iOS Blue","BLUE",dialog);
+        addThemeChip(themeRow1,"Electric Blue","BLUE",dialog);
         addThemeChip(themeRow1,"Purple","PURPLE",dialog);
         themeCard.addView(themeRow1,new LinearLayout.LayoutParams(-1,dp(45)));
         LinearLayout themeRow2 = chipRow();
@@ -976,9 +981,9 @@ public class MainActivity extends Activity {
         appCard.addView(iconPackRow,new LinearLayout.LayoutParams(-1,dp(58)));
         iconPackRow.setOnClickListener(v -> showIconPackChooser(dialog));
 
-        TextView dockRow = settingsRow("Customize Dock","Choose your 4 favorite apps");
+        TextView dockRow = settingsRow("Customize Dock","Choose apps + AMOLED / Glass / Outline style");
         appCard.addView(dockRow,new LinearLayout.LayoutParams(-1,dp(58)));
-        dockRow.setOnClickListener(v -> showDockChooser(dialog));
+        dockRow.setOnClickListener(v -> showDockStyleChooser(dialog));
 
         TextView hiddenRow = settingsRow("Hidden Apps",hiddenSet.size() + " hidden");
         appCard.addView(hiddenRow,new LinearLayout.LayoutParams(-1,dp(58)));
@@ -1091,14 +1096,17 @@ public class MainActivity extends Activity {
 
     private void showQuickDialer() {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(18),dp(18),dp(24)); p.setBackground(round(Color.rgb(10,11,15),28));
-        TextView h=title("Phone"); p.addView(h,new LinearLayout.LayoutParams(-1,dp(52)));
-        EditText number=new EditText(this); number.setHint("Enter phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.GRAY); number.setTextSize(25); number.setGravity(Gravity.CENTER); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(Color.rgb(28,31,39),18)); p.addView(number,new LinearLayout.LayoutParams(-1,dp(62)));
-        String[][] keys={{"1","2 ABC","3 DEF"},{"4 GHI","5 JKL","6 MNO"},{"7 PQRS","8 TUV","9 WXYZ"},{"*","0 +","#"}};
-        for(String[] row:keys){ LinearLayout r=new LinearLayout(this); r.setGravity(Gravity.CENTER); for(String k:row){ TextView b=text(k,21,Color.WHITE); b.setGravity(Gravity.CENTER); b.setBackground(round(Color.rgb(25,28,35),24)); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(68),1f); lp.setMargins(dp(4),dp(4),dp(4),dp(4)); r.addView(b,lp); b.setOnClickListener(v->{ String x=k.substring(0,1); number.append(x); press(v); }); } p.addView(r,new LinearLayout.LayoutParams(-1,dp(76))); }
-        TextView call=text("☎   Call",18,Color.BLACK); call.setTypeface(Typeface.DEFAULT,Typeface.BOLD); call.setGravity(Gravity.CENTER); call.setBackground(round(Color.rgb(96,196,126),24)); LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(dp(190),dp(58)); clp.gravity=Gravity.CENTER_HORIZONTAL; clp.setMargins(0,dp(12),0,0); p.addView(call,clp);
-        call.setOnClickListener(v->{ String n=number.getText().toString().trim(); if(!n.isEmpty()){ try{ startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(n)))); }catch(Exception ignored){} }});
-        d.setContentView(p); Window w=d.getWindow(); if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);} d.show(); if(w!=null)w.setLayout(-1,-2);
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(12),dp(18),dp(22)); p.setBackground(round(Color.rgb(5,6,9),30));
+        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView h=title("Phone"); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
+        TextView close=text("✕",18,Color.WHITE); close.setGravity(Gravity.CENTER); close.setBackground(round(Color.rgb(28,30,36),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
+        EditText number=new EditText(this); number.setHint("Phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.rgb(105,108,118)); number.setTextSize(27); number.setGravity(Gravity.CENTER); number.setSingleLine(true); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(Color.rgb(18,20,26),22)); p.addView(number,new LinearLayout.LayoutParams(-1,dp(68)));
+        TextView erase=text("⌫  Delete",14,Color.rgb(170,190,220)); erase.setGravity(Gravity.CENTER); p.addView(erase,new LinearLayout.LayoutParams(-1,dp(40))); erase.setOnClickListener(v->{int n=number.length();if(n>0)number.getText().delete(n-1,n);}); erase.setOnLongClickListener(v->{number.setText("");return true;});
+        String[][] keys={{"1","2\nABC","3\nDEF"},{"4\nGHI","5\nJKL","6\nMNO"},{"7\nPQRS","8\nTUV","9\nWXYZ"},{"*","0\n+","#"}};
+        for(String[] row:keys){ LinearLayout r=new LinearLayout(this); r.setGravity(Gravity.CENTER); for(String k:row){ TextView b=text(k,20,Color.WHITE); b.setGravity(Gravity.CENTER); b.setBackground(round(Color.rgb(20,22,28),30)); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(72),1f); lp.setMargins(dp(6),dp(5),dp(6),dp(5)); r.addView(b,lp); b.setOnClickListener(v->{number.append(k.substring(0,1));press(v);}); } p.addView(r,new LinearLayout.LayoutParams(-1,dp(82))); }
+        TextView call=text("☎",25,Color.BLACK); call.setGravity(Gravity.CENTER); call.setBackground(round(Color.rgb(80,215,125),31)); LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(dp(74),dp(62)); clp.gravity=Gravity.CENTER_HORIZONTAL; clp.setMargins(0,dp(10),0,0); p.addView(call,clp);
+        call.setOnClickListener(v->{String n=number.getText().toString().trim();if(!n.isEmpty())try{startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(n))));}catch(Exception ignored){}});
+        d.setContentView(p); d.show(); Window w=d.getWindow(); if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);w.setLayout(-1,-2);}
     }
 
     private void openMessagesHub() {
@@ -1185,6 +1193,16 @@ public class MainActivity extends Activity {
             prefs.edit().putInt("columns",c).putInt("rows",r).apply();
             rebuildAfterSettings(dialog);
         });
+    }
+
+    private void showDockStyleChooser(Dialog parent) {
+        final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(16),dp(16),dp(16),dp(18)); p.setBackground(round(Color.rgb(12,13,18),26));
+        p.addView(title("Dock Style"),new LinearLayout.LayoutParams(-1,dp(48)));
+        String[] styles={"AMOLED","Glass","Transparent","Outline"};
+        for(String style:styles){ TextView r=settingsRow(style,"Tap to apply"); p.addView(r,new LinearLayout.LayoutParams(-1,dp(58))); r.setOnClickListener(v->{prefs.edit().putString("dock_style",style).apply();d.dismiss();if(parent!=null)parent.dismiss();buildLauncher();}); }
+        TextView apps=settingsRow("Choose Dock Apps","Select up to 4 apps");p.addView(apps,new LinearLayout.LayoutParams(-1,dp(58)));apps.setOnClickListener(v->{d.dismiss();showDockChooser(parent);});
+        d.setContentView(p);d.show();Window w=d.getWindow();if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);w.setLayout(-1,-2);}
     }
 
     private void showDockChooser(Dialog settingsDialog) {

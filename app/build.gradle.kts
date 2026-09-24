@@ -10,8 +10,8 @@ android {
         applicationId = "com.altaf.designerhome"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "16.0.0"
+        versionCode = 17
+        versionName = "17.0.0"
     }
 
     compileOptions {
@@ -22,5 +22,6 @@ android {
 
 dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.core:core:1.15.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 }

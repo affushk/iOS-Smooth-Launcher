@@ -121,6 +121,16 @@ public class IOSNotificationService extends NotificationListenerService {
         }
     }
 
+    public static boolean clearOne(String key) {
+        IOSNotificationService service = INSTANCE;
+        if (service == null || key == null) return false;
+        try {
+            service.cancelNotification(key);
+            synchronized (ITEMS) { ITEMS.removeIf(i -> i.key.equals(key)); }
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
     public static boolean clearAll() {
         IOSNotificationService service = INSTANCE;
         if (service == null) return false;

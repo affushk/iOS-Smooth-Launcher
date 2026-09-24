@@ -20,6 +20,8 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.MotionEvent;
+import android.view.animation.OvershootInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -274,6 +276,7 @@ public final class IOSSystemPanels {
                             item.appName + (item.title.isEmpty() ? "" : "  •  " + item.title),
                             item.text);
                     list.addView(card, cardParams(activity));
+                    attachSwipeDismiss(activity, card, list, item.key, haptics);
                     card.setOnClickListener(v -> {
                         try {
                             if (item.contentIntent != null) item.contentIntent.send();
@@ -293,6 +296,21 @@ public final class IOSSystemPanels {
         cp.setMargins(0, dp(activity, 8), 0, 0);
         sheet.addView(close, cp);
         close.setOnClickListener(v -> dismiss(root, overlay, sheet, home));
+
+        // Swipe up anywhere on the panel to close it smoothly.
+        final float[] panelDownY = {0f};
+        sheet.setOnTouchListener((v,e) -> {
+            if (e.getActionMasked() == MotionEvent.ACTION_DOWN) panelDownY[0] = e.getRawY();
+            if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+                float dy = e.getRawY() - panelDownY[0];
+                if (dy < -dp(activity, 70)) {
+                    if (haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    dismissUp(root, overlay, sheet, home);
+                    return true;
+                }
+            }
+            return false;
+        });
 
         sheet.setTranslationY(-dp(activity, 90));
         sheet.setAlpha(0f);
@@ -361,6 +379,30 @@ public final class IOSSystemPanels {
         rp.setMargins(0, dp(a, 4), 0, 0);
         parent.addView(row, rp);
         row.setOnClickListener(v -> action.run());
+    }
+
+    private static void attachSwipeDismiss(Activity a, View card, LinearLayout list, String key, boolean haptics) {
+        final float[] downX={0f};
+        final float[] downY={0f};
+        card.setOnTouchListener((v,e) -> {
+            if(e.getActionMasked()==MotionEvent.ACTION_DOWN){ downX[0]=e.getRawX(); downY[0]=e.getRawY(); return false; }
+            float dx=e.getRawX()-downX[0], dy=e.getRawY()-downY[0];
+            if(e.getActionMasked()==MotionEvent.ACTION_MOVE && Math.abs(dx)>Math.abs(dy)){
+                v.setTranslationX(dx); v.setAlpha(Math.max(.25f,1f-Math.abs(dx)/(v.getWidth()*.9f))); return true;
+            }
+            if(e.getActionMasked()==MotionEvent.ACTION_UP && Math.abs(dx)>dp(a,72)){
+                if(haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                float target=dx<0?-Math.max(v.getWidth(),dp(a,360)):Math.max(v.getWidth(),dp(a,360));
+                v.animate().translationX(target).alpha(0f).setDuration(180).withEndAction(() -> {
+                    IOSNotificationService.clearOne(key); list.removeView(v);
+                    if(list.getChildCount()==0) list.addView(notificationCard(a,"No New Notifications","All caught up."),cardParams(a));
+                }).start(); return true;
+            }
+            if(e.getActionMasked()==MotionEvent.ACTION_UP || e.getActionMasked()==MotionEvent.ACTION_CANCEL){
+                v.animate().translationX(0).alpha(1f).setDuration(220).setInterpolator(new OvershootInterpolator(.7f)).start();
+            }
+            return false;
+        });
     }
 
     private static LinearLayout notificationCard(Activity a, String title, String body) {
@@ -515,6 +557,14 @@ public final class IOSSystemPanels {
             setBlur(home, false);
         }).start();
         overlay.animate().alpha(0f).setDuration(180).start();
+    }
+
+    private static void dismissUp(FrameLayout root, FrameLayout overlay, View card, View home) {
+        card.animate().alpha(0f).translationY(-dp((Activity)root.getContext(), 120)).setDuration(220).setInterpolator(new DecelerateInterpolator()).withEndAction(() -> {
+            try { root.removeView(overlay); } catch(Exception ignored) {}
+            setBlur(home,false);
+        }).start();
+        overlay.animate().alpha(0f).setDuration(220).start();
     }
 
     private static void runAndDismiss(FrameLayout root, FrameLayout overlay, View card, View home, Runnable action) {

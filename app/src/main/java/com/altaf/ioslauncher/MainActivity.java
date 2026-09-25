@@ -822,7 +822,7 @@ public class MainActivity extends Activity {
 
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(16),dp(12),dp(16),dp(24));
+        panel.setPadding(dp(16),ThemeEngine.is(this,ThemeEngine.GALAXY)?dp(34):dp(12),dp(16),dp(24));
         panel.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         scroll.addView(panel,new ScrollView.LayoutParams(-1,-2));
 
@@ -836,7 +836,7 @@ public class MainActivity extends Activity {
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView title = title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"ALTAF / SETTINGS":ThemeEngine.is(this,ThemeEngine.GALAXY)?"One UI Settings":ThemeEngine.is(this,ThemeEngine.STOCK)?"Settings · Material":"Settings · Glass");
+        TextView title = title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"ALTAF / SETTINGS":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Settings":ThemeEngine.is(this,ThemeEngine.STOCK)?"Settings · Material":"Settings · Glass"); if(ThemeEngine.is(this,ThemeEngine.GALAXY)) title.setTextSize(30);
         title.setGravity(Gravity.CENTER_VERTICAL);
         titleRow.addView(title,new LinearLayout.LayoutParams(0,dp(44),1f));
 
@@ -1104,7 +1104,7 @@ public class MainActivity extends Activity {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(12),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"PHONE / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Phone":ThemeEngine.is(this,ThemeEngine.STOCK)?"Phone":"Phone  ◌"); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
+        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"PHONE / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Phone":ThemeEngine.is(this,ThemeEngine.STOCK)?"Phone":"Phone  ◌"); if(ThemeEngine.is(this,ThemeEngine.GALAXY)) h.setTextSize(30); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
         TextView close=text("✕",18,Color.WHITE); close.setGravity(Gravity.CENTER); close.setBackground(round(Color.rgb(28,30,36),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
         EditText number=new EditText(this); number.setHint("Phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.rgb(105,108,118)); number.setTextSize(27); number.setGravity(Gravity.CENTER); number.setSingleLine(true); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(number,new LinearLayout.LayoutParams(-1,dp(68)));
         TextView erase=text("⌫  Delete",14,Color.rgb(170,190,220)); erase.setGravity(Gravity.CENTER); p.addView(erase,new LinearLayout.LayoutParams(-1,dp(40))); erase.setOnClickListener(v->{int n=number.length();if(n>0)number.getText().delete(n-1,n);}); erase.setOnLongClickListener(v->{number.setText("");return true;});
@@ -1119,7 +1119,7 @@ public class MainActivity extends Activity {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(14),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"MESSAGES / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Messages":ThemeEngine.is(this,ThemeEngine.STOCK)?"Messages":"Messages  ◌"); top.addView(h,new LinearLayout.LayoutParams(0,dp(52),1f));
+        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"MESSAGES / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Messages":ThemeEngine.is(this,ThemeEngine.STOCK)?"Messages":"Messages  ◌"); if(ThemeEngine.is(this,ThemeEngine.GALAXY)) h.setTextSize(30); top.addView(h,new LinearLayout.LayoutParams(0,dp(52),1f));
         TextView close=text("✕",18,ThemeEngine.text(this)); close.setGravity(Gravity.CENTER); close.setBackground(round(ThemeEngine.surface(this),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
         TextView compose=settingsRow("New Message","Compose using your phone's SMS service"); compose.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(compose,new LinearLayout.LayoutParams(-1,dp(68)));
         compose.setOnClickListener(v->{d.dismiss();try{startActivity(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:")));}catch(Exception ignored){}});

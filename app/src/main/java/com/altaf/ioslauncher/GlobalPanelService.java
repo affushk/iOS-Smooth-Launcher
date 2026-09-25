@@ -23,6 +23,10 @@ import android.content.pm.ApplicationInfo;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
 import android.widget.ScrollView;
+import android.app.AlarmManager;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class GlobalPanelService extends Service {
     private WindowManager wm;
@@ -66,8 +70,11 @@ public class GlobalPanelService extends Service {
                 new int[]{Color.argb(232,18,20,25),Color.argb(218,5,6,9)});
         bg.setCornerRadius(dp(28)); bg.setStroke(dp(1),Color.argb(48,255,255,255));
         card.setBackground(bg);
-        TextView title=label(control?"Quick Controls":"Notifications",22,true);
+        TextView title=label(control?"Control Center":"Notification Center",22,true);
         card.addView(title,new LinearLayout.LayoutParams(-1,dp(48)));
+        TextView status=label(statusSummary(),13,false);
+        status.setTextColor(Color.argb(210,255,255,255));
+        card.addView(status,new LinearLayout.LayoutParams(-1,dp(38)));
         if(control){
             AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
             int mode=am==null?AudioManager.RINGER_MODE_NORMAL:am.getRingerMode();
@@ -102,6 +109,23 @@ public class GlobalPanelService extends Service {
         panelLp.gravity=Gravity.TOP; panelLp.dimAmount=.18f;
         if(Build.VERSION.SDK_INT>=31){ panelLp.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND; panelLp.setBlurBehindRadius(dp(18)); }
         try{wm.addView(panel,panelLp);}catch(Exception ex){panel=null;}
+    }
+    private String statusSummary(){
+        StringBuilder s=new StringBuilder(networkState());
+        try{
+            AudioManager a=(AudioManager)getSystemService(AUDIO_SERVICE);
+            int m=a.getRingerMode();
+            if(m==AudioManager.RINGER_MODE_SILENT) s.append("  •  Silent");
+            else if(m==AudioManager.RINGER_MODE_VIBRATE) s.append("  •  Vibrate");
+        }catch(Exception ignored){}
+        try{
+            AlarmManager a=(AlarmManager)getSystemService(ALARM_SERVICE);
+            AlarmManager.AlarmClockInfo info=a.getNextAlarmClock();
+            if(info!=null) s.append("  •  Alarm ").append(new SimpleDateFormat("h:mm a",Locale.getDefault()).format(new Date(info.getTriggerTime())));
+        }catch(Exception ignored){}
+        int n=IOSNotificationService.snapshot().size();
+        if(n>0) s.append("  •  ").append(n).append(" notif.");
+        return s.toString();
     }
     private String networkState(){
         try{

@@ -467,7 +467,7 @@ public class MainActivity extends Activity {
         TextView search = text("⌕  Search", 13, Color.WHITE);
         search.setGravity(Gravity.CENTER);
         search.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        search.setBackground(round(ThemeEngine.glass(this,98, 18, 20, 28), 18));
+        search.setBackground(round(ThemeEngine.glass(this,98), ThemeEngine.radius(this)));
         holder.addView(search, new LinearLayout.LayoutParams(dp(124), dp(34)));
         search.setOnClickListener(v -> {
             press(v);
@@ -1161,7 +1161,7 @@ public class MainActivity extends Activity {
     private TextView settingsRow(String title,String subtitle) {
         TextView t=new TextView(this);
         t.setText(title + "\n" + subtitle + "   ›");
-        t.setTextColor(Color.WHITE);
+        t.setTextColor(ThemeEngine.text(this));
         t.setTextSize(14);
         t.setGravity(Gravity.CENTER_VERTICAL);
         t.setPadding(dp(12),dp(6),dp(12),dp(6));
@@ -1172,7 +1172,7 @@ public class MainActivity extends Activity {
     private Switch switchRow(String label,boolean checked) {
         Switch s=new Switch(this);
         s.setText(label);
-        s.setTextColor(Color.WHITE);
+        s.setTextColor(ThemeEngine.text(this));
         s.setTextSize(14);
         s.setChecked(checked);
         s.setPadding(dp(10),0,dp(10),0);
@@ -1181,7 +1181,7 @@ public class MainActivity extends Activity {
                 new int[]{-android.R.attr.state_checked}
         };
         s.setThumbTintList(new ColorStateList(states, new int[]{Color.WHITE, Color.rgb(220,220,225)}));
-        s.setTrackTintList(new ColorStateList(states, new int[]{Color.rgb(52,199,89), Color.rgb(98,98,105)}));
+        s.setTrackTintList(new ColorStateList(states, new int[]{ThemeEngine.accent(this), ThemeEngine.muted(this)}));
         return s;
     }
 
@@ -1474,10 +1474,10 @@ public class MainActivity extends Activity {
     }
 
     private TextView chip(String label,boolean selected) {
-        TextView t=text(label,11,Color.WHITE);
+        TextView t=text(label,11,ThemeEngine.text(this));
         t.setGravity(Gravity.CENTER);
         t.setTypeface(Typeface.DEFAULT,selected?Typeface.BOLD:Typeface.NORMAL);
-        t.setBackground(round(selected?Color.rgb(55,120,245):Color.rgb(56,59,70),16));
+        t.setBackground(round(selected?ThemeEngine.accent(this):ThemeEngine.surfaceAlt(this),ThemeEngine.radius(this)));
         LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(38),1f);
         lp.setMargins(dp(3),0,dp(3),0);
         t.setLayoutParams(lp);
@@ -1738,7 +1738,7 @@ public class MainActivity extends Activity {
     }
 
     private TextView title(String value) {
-        TextView t=text(value,22,Color.WHITE);
+        TextView t=text(value,22,ThemeEngine.text(this));
         t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         return t;
     }

@@ -480,13 +480,13 @@ public class MainActivity extends Activity {
     private void buildDock() {
         dock = new LinearLayout(this);
         dock.setGravity(Gravity.CENTER);
-        dock.setPadding(dp(10), dp(8), dp(10), dp(8));
+        dock.setPadding(dp(14), dp(9), dp(14), dp(9));
         String ds=prefs.getString("dock_style","Glass");
         if("Transparent".equals(ds)) dock.setBackgroundColor(Color.TRANSPARENT);
         else if("AMOLED".equals(ds)) dock.setBackground(round(Color.argb(235,0,0,0),30));
         else if("Outline".equals(ds)) { android.graphics.drawable.GradientDrawable gd=round(Color.argb(70,15,16,20),30); gd.setStroke(dp(1),Color.argb(120,255,255,255)); dock.setBackground(gd); }
         else dock.setBackground(glassRound(30));
-        if(android.os.Build.VERSION.SDK_INT>=31 && "Glass".equals(ds)) dock.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(10f,10f,android.graphics.Shader.TileMode.CLAMP));
+        // Keep dock icons razor-sharp: never blur the icon container itself.
 
         for (AppItem app : chooseDockApps()) {
             FrameLayout slot = new FrameLayout(this);
@@ -507,7 +507,7 @@ public class MainActivity extends Activity {
                 return true;
             });
 
-            dock.addView(slot, new LinearLayout.LayoutParams(0, -1, 1f));
+            LinearLayout.LayoutParams dlp=new LinearLayout.LayoutParams(0,-1,1f); dlp.setMargins(dp(4),0,dp(4),0); dock.addView(slot,dlp);
         }
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(82));

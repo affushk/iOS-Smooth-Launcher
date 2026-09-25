@@ -303,7 +303,7 @@ public class MainActivity extends Activity {
 
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(16), dp(10), dp(16), dp(12));
+        int themeSpace=ThemeEngine.homeSpacing(this);\n        content.setPadding(dp(themeSpace+6), dp(themeSpace), dp(themeSpace+6), dp(themeSpace+2));
         root.addView(content, new FrameLayout.LayoutParams(-1, -1));
 
         buildStatusBar();
@@ -464,10 +464,10 @@ public class MainActivity extends Activity {
         holder.addView(dots, new LinearLayout.LayoutParams(-1, dp(18)));
         rebuildDots(0);
 
-        TextView search = text("⌕  Search", 13, Color.WHITE);
+        TextView search = text("⌕  "+ThemeEngine.searchHint(this), 13, ThemeEngine.text(this));
         search.setGravity(Gravity.CENTER);
         search.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        search.setBackground(round(ThemeEngine.glass(this,98), ThemeEngine.radius(this)));
+        search.setBackground(round(ThemeEngine.glass(this,ThemeEngine.glassAlpha(this)), ThemeEngine.cardRadius(this)));
         holder.addView(search, new LinearLayout.LayoutParams(dp(124), dp(34)));
         search.setOnClickListener(v -> {
             press(v);
@@ -489,9 +489,9 @@ public class MainActivity extends Activity {
         dock.setPadding(dp(14), dp(9), dp(14), dp(9));
         String ds=prefs.getString("dock_style","Glass");
         if("Transparent".equals(ds)) dock.setBackgroundColor(Color.TRANSPARENT);
-        else if("AMOLED".equals(ds)) dock.setBackground(round(ThemeEngine.glass(this,235),ThemeEngine.radius(this)));
+        else if("AMOLED".equals(ds)) dock.setBackground(round(ThemeEngine.glass(this,ThemeEngine.glassAlpha(this)),ThemeEngine.dockRadius(this)));
         else if("Outline".equals(ds)) { android.graphics.drawable.GradientDrawable gd=round(Color.argb(70,15,16,20),30); gd.setStroke(dp(1),Color.argb(120,255,255,255)); dock.setBackground(gd); }
-        else dock.setBackground(round(ThemeEngine.glass(this,Math.max(90,glassAlpha*2)),ThemeEngine.radius(this)));
+        else dock.setBackground(round(ThemeEngine.glass(this,ThemeEngine.glassAlpha(this)),ThemeEngine.dockRadius(this)));
         // Keep dock icons razor-sharp: never blur the icon container itself.
 
         for (AppItem app : chooseDockApps()) {
@@ -1666,7 +1666,7 @@ public class MainActivity extends Activity {
 
     private void press(View v) {
         if(haptics) v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-        v.animate().scaleX(.93f).scaleY(.93f).setDuration(65).withEndAction(() ->
+        v.animate().scaleX(ThemeEngine.pressScale(this)).scaleY(ThemeEngine.pressScale(this)).setDuration((long)(65*ThemeEngine.motion(this))).withEndAction(() ->
                 v.animate().scaleX(1f).scaleY(1f).setDuration(115).start()
         ).start();
     }
@@ -1692,21 +1692,14 @@ public class MainActivity extends Activity {
     }
 
     private void applyWallpaper() {
-        if("SYSTEM".equals(theme)){
-            try{
-                root.setBackground(WallpaperManager.getInstance(this).getDrawable());
-                return;
-            }catch(Exception ignored){}
-        }
-
-        if("AMOLED".equals(theme)){
-            root.setBackground(wallpaper(new int[]{0xFF000000,0xFF000000,0xFF050505}));
-        }else if("PURPLE".equals(theme)){
-            root.setBackground(wallpaper(new int[]{0xFF140A2A,0xFF432074,0xFF802A78}));
-        }else if("GRAPHITE".equals(theme)){
-            root.setBackground(wallpaper(new int[]{0xFF080A0E,0xFF1B2430,0xFF0C1118}));
-        }else{
-            root.setBackground(wallpaper(new int[]{0xFF081B3B,0xFF1550B8,0xFF2088F4}));
+        if (ThemeEngine.is(this,ThemeEngine.ALTAF)) {
+            root.setBackground(wallpaper(new int[]{0xFF000000,0xFF050403,0xFF000000}));
+        } else if (ThemeEngine.is(this,ThemeEngine.GALAXY)) {
+            root.setBackground(wallpaper(new int[]{0xFF090A0F,0xFF171A25,0xFF08090D}));
+        } else if (ThemeEngine.is(this,ThemeEngine.STOCK)) {
+            root.setBackground(wallpaper(new int[]{0xFF111722,0xFF1B2638,0xFF0D1119}));
+        } else {
+            root.setBackground(wallpaper(new int[]{0xFF08111E,0xFF18283C,0xFF080C13}));
         }
     }
 

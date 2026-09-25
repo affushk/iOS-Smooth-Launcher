@@ -16,6 +16,13 @@ import android.widget.TextView;
 import android.graphics.drawable.GradientDrawable;
 import android.media.AudioManager;
 import android.os.Build;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.content.pm.ApplicationInfo;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import android.widget.ScrollView;
 
 public class GlobalPanelService extends Service {
     private WindowManager wm;
@@ -65,7 +72,7 @@ public class GlobalPanelService extends Service {
             AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
             int mode=am==null?AudioManager.RINGER_MODE_NORMAL:am.getRingerMode();
             String sound=mode==AudioManager.RINGER_MODE_SILENT?"Silent":mode==AudioManager.RINGER_MODE_VIBRATE?"Vibrate":"Sound";
-            TextView state=label("Wi-Fi / Data     •     "+sound,15,false);
+            TextView state=label(networkState()+"     •     "+sound,15,false);
             card.addView(state,new LinearLayout.LayoutParams(-1,dp(48)));
             TextView settings=label("Open system controls",16,true);
             settings.setGravity(Gravity.CENTER);
@@ -78,7 +85,7 @@ public class GlobalPanelService extends Service {
             int count=Math.min(items.size(),5);
             for(int i=0;i<count;i++){
                 IOSNotificationService.Item n=items.get(i);
-                TextView row=label(n.appName+"\n"+n.title+(n.text==null||n.text.isEmpty()?"":"  ·  "+n.text),14,false);
+                TextView row=label("●  "+n.appName+"\n"+n.title+(n.text==null||n.text.isEmpty()?"":"  ·  "+n.text),14,false);
                 row.setMaxLines(3); row.setPadding(dp(14),dp(10),dp(14),dp(10)); row.setBackground(round(Color.argb(42,255,255,255),18));
                 LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,-2); rlp.setMargins(0,dp(9),0,0); card.addView(row,rlp);
                 final android.app.PendingIntent pi=n.contentIntent;
@@ -95,6 +102,19 @@ public class GlobalPanelService extends Service {
         panelLp.gravity=Gravity.TOP; panelLp.dimAmount=.18f;
         if(Build.VERSION.SDK_INT>=31){ panelLp.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND; panelLp.setBlurBehindRadius(dp(18)); }
         try{wm.addView(panel,panelLp);}catch(Exception ex){panel=null;}
+    }
+    private String networkState(){
+        try{
+            ConnectivityManager cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+            Network n=cm.getActiveNetwork(); NetworkCapabilities caps=cm.getNetworkCapabilities(n);
+            if(caps==null) return "Offline";
+            boolean wifi=caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+            boolean cell=caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
+            boolean net=caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+            if(wifi) return net?"Wi-Fi connected":"Wi-Fi";
+            if(cell) return net?"Mobile data":"Cellular";
+            return net?"Internet connected":"Offline";
+        }catch(Exception e){return "Network";}
     }
     private TextView label(String s,int size,boolean bold){ TextView v=new TextView(this); v.setText(s); v.setTextColor(Color.WHITE); v.setTextSize(size); v.setGravity(Gravity.CENTER_VERTICAL); if(bold)v.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD); return v; }
     private GradientDrawable round(int color,int radius){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(radius));return g;}

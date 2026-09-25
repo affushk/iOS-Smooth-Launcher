@@ -1,149 +1,57 @@
 package com.altaf.ioslauncher;
 
-import android.app.Service;
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
-import android.os.IBinder;
-import android.provider.Settings;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.graphics.drawable.GradientDrawable;
+import android.app.*;
+import android.content.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
 import android.media.AudioManager;
-import android.os.Build;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.content.pm.ApplicationInfo;
-import android.graphics.drawable.Drawable;
-import android.widget.ImageView;
-import android.widget.ScrollView;
-import android.app.AlarmManager;
+import android.net.*;
+import android.os.*;
+import android.provider.Settings;
+import android.view.*;
+import android.widget.*;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 
 public class GlobalPanelService extends Service {
-    private WindowManager wm;
-    private View edge;
-    private float downX, downY;
-    private View panel;
-    private WindowManager.LayoutParams panelLp;
-
-    @Override public void onCreate() {
-        super.onCreate();
-        if (!Settings.canDrawOverlays(this)) { stopSelf(); return; }
-        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        edge = new View(this);
-        edge.setBackgroundColor(Color.TRANSPARENT);
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT, dp(14),
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.TOP;
-        edge.setOnTouchListener((v,e) -> {
-            if (e.getActionMasked() == MotionEvent.ACTION_DOWN) { downX=e.getRawX(); downY=e.getRawY(); return true; }
-            if (e.getActionMasked() == MotionEvent.ACTION_UP) {
-                if (e.getRawY()-downY > dp(54) && Math.abs(e.getRawX()-downX) < dp(70)) {
-                    showPanel(downX > getResources().getDisplayMetrics().widthPixels*.58f);
-                }
-                return true;
-            }
-            return true;
-        });
-        wm.addView(edge,lp);
-    }
-    private void showPanel(boolean control) {
-        if (panel != null) return;
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.argb(72,0,0,0));
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(20),dp(20),dp(20),dp(22));
-        GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[]{Color.argb(232,18,20,25),Color.argb(218,5,6,9)});
-        bg.setCornerRadius(dp(28)); bg.setStroke(dp(1),Color.argb(48,255,255,255));
-        card.setBackground(bg);
-        TextView title=label(control?"Control Center":"Notification Center",22,true);
-        LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(-1,dp(52)); titleLp.setMargins(0,0,0,dp(4)); card.addView(title,titleLp);
-        TextView status=label(statusSummary(),13,false);
-        status.setTextColor(Color.argb(210,255,255,255));
-        LinearLayout.LayoutParams statusLp=new LinearLayout.LayoutParams(-1,dp(40)); statusLp.setMargins(0,0,0,dp(10)); card.addView(status,statusLp);
-        if(control){
-            AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
-            int mode=am==null?AudioManager.RINGER_MODE_NORMAL:am.getRingerMode();
-            String sound=mode==AudioManager.RINGER_MODE_SILENT?"Silent":mode==AudioManager.RINGER_MODE_VIBRATE?"Vibrate":"Sound";
-            TextView state=label(networkState()+"     •     "+sound,15,false);
-            card.addView(state,new LinearLayout.LayoutParams(-1,dp(48)));
-            TextView settings=label("Open system controls",16,true);
-            settings.setGravity(Gravity.CENTER);
-            settings.setBackground(round(Color.argb(45,255,255,255),18));
-            settings.setOnClickListener(v->{ try{ Intent i=new Intent(Settings.ACTION_SETTINGS); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(i);}catch(Exception ignored){} hidePanel();});
-            LinearLayout.LayoutParams slp=new LinearLayout.LayoutParams(-1,dp(58)); slp.setMargins(0,dp(12),0,0); card.addView(settings,slp);
-        } else {
-            java.util.List<IOSNotificationService.Item> items=IOSNotificationService.snapshot();
-            if(items.isEmpty()) card.addView(label("No new notifications",15,false),new LinearLayout.LayoutParams(-1,dp(60)));
-            int count=Math.min(items.size(),5);
-            for(int i=0;i<count;i++){
-                IOSNotificationService.Item n=items.get(i);
-                TextView row=label("●  "+n.appName+"\n"+n.title+(n.text==null||n.text.isEmpty()?"":"  ·  "+n.text),14,false);
-                row.setMaxLines(3); row.setLineSpacing(dp(2),1f); row.setPadding(dp(16),dp(13),dp(16),dp(13)); row.setBackground(round(Color.argb(42,255,255,255),18));
-                LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,-2); rlp.setMargins(0,dp(10),0,0); card.addView(row,rlp);
-                final android.app.PendingIntent pi=n.contentIntent;
-                row.setOnClickListener(v->{ if(pi!=null) try{pi.send();}catch(Exception ignored){} hidePanel();});
-            }
-        }
-        FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,-2,Gravity.TOP);
-        cp.setMargins(dp(12),dp(28),dp(12),dp(18)); root.addView(card,cp);
-        root.setOnTouchListener((v,e)->{ if(e.getActionMasked()==MotionEvent.ACTION_DOWN && e.getY()>card.getBottom()+dp(20)){hidePanel();return true;} return false;});
-        panel=root;
-        panelLp=new WindowManager.LayoutParams(-1,-1,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN|WindowManager.LayoutParams.FLAG_DIM_BEHIND,
-                PixelFormat.TRANSLUCENT);
-        panelLp.gravity=Gravity.TOP; panelLp.dimAmount=.18f;
-        if(Build.VERSION.SDK_INT>=31){ panelLp.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND; panelLp.setBlurBehindRadius(dp(18)); }
-        try{wm.addView(panel,panelLp);}catch(Exception ex){panel=null;}
-    }
-    private String statusSummary(){
-        StringBuilder s=new StringBuilder(networkState());
-        try{
-            AudioManager a=(AudioManager)getSystemService(AUDIO_SERVICE);
-            int m=a.getRingerMode();
-            if(m==AudioManager.RINGER_MODE_SILENT) s.append("  •  Silent");
-            else if(m==AudioManager.RINGER_MODE_VIBRATE) s.append("  •  Vibrate");
-        }catch(Exception ignored){}
-        try{
-            AlarmManager a=(AlarmManager)getSystemService(ALARM_SERVICE);
-            AlarmManager.AlarmClockInfo info=a.getNextAlarmClock();
-            if(info!=null) s.append("  •  Alarm ").append(new SimpleDateFormat("h:mm a",Locale.getDefault()).format(new Date(info.getTriggerTime())));
-        }catch(Exception ignored){}
-        int n=IOSNotificationService.snapshot().size();
-        if(n>0) s.append("  •  ").append(n).append(" notif.");
-        return s.toString();
-    }
-    private String networkState(){
-        try{
-            ConnectivityManager cm=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
-            Network n=cm.getActiveNetwork(); NetworkCapabilities caps=cm.getNetworkCapabilities(n);
-            if(caps==null) return "Offline";
-            boolean wifi=caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
-            boolean cell=caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
-            boolean net=caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-            if(wifi) return net?"Wi-Fi connected":"Wi-Fi";
-            if(cell) return net?"Mobile data":"Cellular";
-            return net?"Internet connected":"Offline";
-        }catch(Exception e){return "Network";}
-    }
-    private TextView label(String s,int size,boolean bold){ TextView v=new TextView(this); v.setText(s); v.setTextColor(Color.WHITE); v.setTextSize(size); v.setGravity(Gravity.CENTER_VERTICAL); if(bold)v.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD); return v; }
-    private GradientDrawable round(int color,int radius){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(radius));return g;}
-    private void hidePanel(){ if(wm!=null&&panel!=null)try{wm.removeView(panel);}catch(Exception ignored){} panel=null; }
-    private int dp(int n){ return Math.round(n*getResources().getDisplayMetrics().density); }
-    @Override public void onDestroy(){ hidePanel(); if(wm!=null && edge!=null) try{wm.removeView(edge);}catch(Exception ignored){} super.onDestroy(); }
-    @Override public IBinder onBind(Intent intent){ return null; }
+ private WindowManager wm; private View edge,panel; private float sx,sy;
+ @Override public void onCreate(){super.onCreate(); if(!Settings.canDrawOverlays(this)){stopSelf();return;} wm=(WindowManager)getSystemService(WINDOW_SERVICE); installEdge();}
+ private void installEdge(){
+  edge=new View(this); edge.setBackgroundColor(Color.TRANSPARENT);
+  WindowManager.LayoutParams p=new WindowManager.LayoutParams(-1,dp(10),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT); p.gravity=Gravity.TOP;
+  edge.setOnTouchListener((v,e)->{if(e.getActionMasked()==0){sx=e.getRawX();sy=e.getRawY();return true;} if(e.getActionMasked()==1){if(e.getRawY()-sy>dp(46)&&Math.abs(e.getRawX()-sx)<dp(90)) showNotifications(); return true;} return true;}); wm.addView(edge,p);
+ }
+ private void showNotifications(){
+  if(panel!=null)return;
+  FrameLayout root=new FrameLayout(this); root.setBackgroundColor(Color.argb(46,0,0,0));
+  LinearLayout sheet=new LinearLayout(this); sheet.setOrientation(LinearLayout.VERTICAL); sheet.setPadding(dp(18),dp(14),dp(18),dp(18));
+  GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{Color.argb(218,14,16,20),Color.argb(205,3,4,6)}); bg.setCornerRadius(dp(30)); bg.setStroke(dp(1),Color.argb(45,255,255,255)); sheet.setBackground(bg);
+  LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
+  TextView title=txt("Notifications",22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
+  TextView clear=txt("Clear",14,true); clear.setGravity(Gravity.CENTER); clear.setPadding(dp(14),0,dp(14),0); clear.setBackground(round(Color.argb(36,255,255,255),16)); clear.setOnClickListener(v->{IOSNotificationService.clearAll();hide();});
+  top.addView(clear,new LinearLayout.LayoutParams(dp(72),dp(38))); sheet.addView(top);
+  TextView status=txt(status(),12,false); status.setTextColor(Color.LTGRAY); LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(34)); sp.setMargins(0,0,0,dp(8)); sheet.addView(status,sp);
+  ScrollView scroll=new ScrollView(this); LinearLayout list=new LinearLayout(this); list.setOrientation(LinearLayout.VERTICAL); scroll.addView(list,new ScrollView.LayoutParams(-1,-2));
+  List<IOSNotificationService.Item> items=IOSNotificationService.snapshot();
+  if(items.isEmpty()){TextView empty=txt("No new notifications",15,false); empty.setGravity(Gravity.CENTER); list.addView(empty,new LinearLayout.LayoutParams(-1,dp(110)));}
+  for(IOSNotificationService.Item n:items){
+   LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14),dp(12),dp(14),dp(12)); row.setBackground(round(Color.argb(38,255,255,255),20));
+   ImageView icon=new ImageView(this); try{icon.setImageDrawable(getPackageManager().getApplicationIcon(n.packageName));}catch(Exception x){icon.setImageResource(android.R.drawable.sym_def_app_icon);} row.addView(icon,new LinearLayout.LayoutParams(dp(40),dp(40)));
+   LinearLayout words=new LinearLayout(this); words.setOrientation(LinearLayout.VERTICAL); words.setPadding(dp(12),0,0,0);
+   TextView app=txt(n.appName,13,true); TextView body=txt(n.title+(n.text==null||n.text.isEmpty()?"":"\n"+n.text),14,false); body.setMaxLines(3); body.setEllipsize(android.text.TextUtils.TruncateAt.END); words.addView(app); words.addView(body); row.addView(words,new LinearLayout.LayoutParams(0,-2,1));
+   row.setOnClickListener(v->{if(n.contentIntent!=null)try{n.contentIntent.send();}catch(Exception ignored){}hide();});
+   LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,-2); rp.setMargins(0,0,0,dp(10)); list.addView(row,rp);
+  }
+  sheet.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+  TextView grab=txt("━━━━",18,true); grab.setGravity(Gravity.CENTER); grab.setTextColor(Color.GRAY); grab.setOnClickListener(v->hide()); sheet.addView(grab,new LinearLayout.LayoutParams(-1,dp(34)));
+  FrameLayout.LayoutParams fp=new FrameLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().heightPixels*.78f),Gravity.TOP); fp.setMargins(dp(10),dp(24),dp(10),0); root.addView(sheet,fp);
+  root.setOnTouchListener(new View.OnTouchListener(){float y; public boolean onTouch(View v,MotionEvent e){if(e.getActionMasked()==0){y=e.getRawY();return true;}if(e.getActionMasked()==1&&e.getRawY()-y< -dp(55)){hide();return true;}return false;}});
+  panel=root; WindowManager.LayoutParams p=new WindowManager.LayoutParams(-1,-1,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN|WindowManager.LayoutParams.FLAG_DIM_BEHIND,PixelFormat.TRANSLUCENT);p.gravity=Gravity.TOP;p.dimAmount=.12f;if(Build.VERSION.SDK_INT>=31){p.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;p.setBlurBehindRadius(dp(22));}try{wm.addView(panel,p);}catch(Exception x){panel=null;}
+ }
+ private String status(){StringBuilder s=new StringBuilder(net()); try{AudioManager a=(AudioManager)getSystemService(AUDIO_SERVICE);int m=a.getRingerMode();if(m==AudioManager.RINGER_MODE_SILENT)s.append("  •  Silent");else if(m==AudioManager.RINGER_MODE_VIBRATE)s.append("  •  Vibrate");}catch(Exception ignored){} try{AlarmManager a=(AlarmManager)getSystemService(ALARM_SERVICE);AlarmManager.AlarmClockInfo i=a.getNextAlarmClock();if(i!=null)s.append("  •  Alarm ").append(new SimpleDateFormat("h:mm a",Locale.getDefault()).format(new Date(i.getTriggerTime())));}catch(Exception ignored){} return s.toString();}
+ private String net(){try{ConnectivityManager c=(ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);NetworkCapabilities n=c.getNetworkCapabilities(c.getActiveNetwork());if(n==null)return"Offline";if(n.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))return"Wi-Fi";if(n.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))return"Mobile data";return"Online";}catch(Exception e){return"Network";}}
+ private TextView txt(String s,int z,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextColor(Color.WHITE);v.setTextSize(z);v.setGravity(Gravity.CENTER_VERTICAL);if(b)v.setTypeface(android.graphics.Typeface.DEFAULT,1);return v;}
+ private GradientDrawable round(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;} private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
+ private void hide(){if(panel!=null)try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}
+ @Override public void onDestroy(){hide();if(edge!=null)try{wm.removeView(edge);}catch(Exception ignored){}super.onDestroy();} @Override public IBinder onBind(Intent i){return null;}
 }

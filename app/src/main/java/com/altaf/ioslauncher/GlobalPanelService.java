@@ -23,7 +23,7 @@ public class GlobalPanelService extends Service {
         edge = new View(this);
         edge.setBackgroundColor(Color.TRANSPARENT);
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT, dp(48),
+            WindowManager.LayoutParams.MATCH_PARENT, dp(14),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT);
@@ -31,7 +31,7 @@ public class GlobalPanelService extends Service {
         edge.setOnTouchListener((v,e) -> {
             if (e.getActionMasked() == MotionEvent.ACTION_DOWN) { downX=e.getRawX(); downY=e.getRawY(); return true; }
             if (e.getActionMasked() == MotionEvent.ACTION_UP) {
-                if (e.getRawY()-downY > dp(30)) {
+                if (e.getRawY()-downY > dp(54) && Math.abs(e.getRawX()-downX) < dp(70)) {
                     Intent i=new Intent(this,MainActivity.class);
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     i.putExtra("open_global_panel",true);

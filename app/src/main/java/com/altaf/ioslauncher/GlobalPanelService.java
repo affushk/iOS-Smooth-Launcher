@@ -18,8 +18,8 @@ public class GlobalPanelService extends Service {
  @Override public void onCreate(){super.onCreate(); if(!Settings.canDrawOverlays(this)){stopSelf();return;} wm=(WindowManager)getSystemService(WINDOW_SERVICE); installEdge();}
  private void installEdge(){
   edge=new View(this); edge.setBackgroundColor(Color.TRANSPARENT);
-  WindowManager.LayoutParams p=new WindowManager.LayoutParams(-1,dp(10),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT); p.gravity=Gravity.TOP;
-  edge.setOnTouchListener((v,e)->{if(e.getActionMasked()==0){sx=e.getRawX();sy=e.getRawY();return true;} if(e.getActionMasked()==1){if(e.getRawY()-sy>dp(46)&&Math.abs(e.getRawX()-sx)<dp(90)) showNotifications(); return true;} return true;}); wm.addView(edge,p);
+  WindowManager.LayoutParams p=new WindowManager.LayoutParams(-1,dp(18),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,PixelFormat.TRANSLUCENT); p.gravity=Gravity.TOP;
+  edge.setOnTouchListener((v,e)->{if(e.getActionMasked()==0){sx=e.getRawX();sy=e.getRawY();return true;} if(e.getActionMasked()==1){if(e.getRawY()-sy>dp(34)&&Math.abs(e.getRawX()-sx)<dp(120)) showNotifications(); return true;} return true;}); wm.addView(edge,p);
  }
  private void showNotifications(){
   if(panel!=null)return;

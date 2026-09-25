@@ -24,10 +24,10 @@ public class GlobalPanelService extends Service {
  private void showNotifications(){
   if(panel!=null)return;
   FrameLayout root=new FrameLayout(this); root.setBackgroundColor(Color.argb(46,0,0,0));
-  LinearLayout sheet=new LinearLayout(this); sheet.setOrientation(LinearLayout.VERTICAL); sheet.setPadding(dp(18),dp(14),dp(18),dp(18));
+  LinearLayout sheet=new LinearLayout(this); sheet.setOrientation(LinearLayout.VERTICAL); sheet.setPadding(dp(18),ThemeEngine.is(this,ThemeEngine.GALAXY)?dp(30):dp(14),dp(18),dp(18));
   GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{ThemeEngine.glass(this,ThemeEngine.panelAlpha(this)),ThemeEngine.glass(this,Math.max(120,ThemeEngine.panelAlpha(this)-28))}); bg.setCornerRadius(dp(ThemeEngine.cardRadius(this))); bg.setStroke(dp(1),Color.argb(45,255,255,255)); sheet.setBackground(bg);
   LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-  TextView title=txt(ThemeEngine.is(this,ThemeEngine.GALAXY)?"Notifications":"Notifications",ThemeEngine.is(this,ThemeEngine.GALAXY)?24:22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
+  TextView title=txt("Notifications",ThemeEngine.is(this,ThemeEngine.GALAXY)?28:22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
   TextView clear=txt("Clear",14,true); clear.setGravity(Gravity.CENTER); clear.setPadding(dp(14),0,dp(14),0); clear.setBackground(round(ThemeEngine.glass(this,ThemeEngine.glassAlpha(this)),ThemeEngine.radius(this))); clear.setOnClickListener(v->{IOSNotificationService.clearAll();hide();});
   top.addView(clear,new LinearLayout.LayoutParams(dp(72),dp(38))); sheet.addView(top);
   TextView status=txt(status(),12,false); status.setTextColor(Color.LTGRAY); LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(34)); sp.setMargins(0,0,0,dp(8)); sheet.addView(status,sp);

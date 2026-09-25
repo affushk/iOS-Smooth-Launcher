@@ -33,5 +33,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+    <service android:name=".GlobalPanelService" android:exported="false" />
     </application>
 </manifest>

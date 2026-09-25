@@ -11,7 +11,7 @@
     </queries>
     <application
         android:allowBackup="false"
-        android:label="Altaf Designer Home"
+        android:label="Altaf Theme Studio"
         android:icon="@drawable/altaf_launcher_icon"
         android:roundIcon="@drawable/altaf_launcher_icon"
         android:supportsRtl="true"
@@ -21,18 +21,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" /></provider>
-        <service android:name=".IOSNotificationService" android:label="Altaf Notifications" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
-    <service android:name=".GlobalPanelService" android:exported="false" />
     </application>
 </manifest>

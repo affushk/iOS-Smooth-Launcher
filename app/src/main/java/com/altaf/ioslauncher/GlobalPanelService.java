@@ -81,7 +81,7 @@ public class GlobalPanelService extends Service {
                 TextView row=label(n.appName+"\n"+n.title+(n.text==null||n.text.isEmpty()?"":"  ·  "+n.text),14,false);
                 row.setMaxLines(3); row.setPadding(dp(14),dp(10),dp(14),dp(10)); row.setBackground(round(Color.argb(42,255,255,255),18));
                 LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,-2); rlp.setMargins(0,dp(9),0,0); card.addView(row,rlp);
-                final android.app.PendingIntent pi=n.pendingIntent;
+                final android.app.PendingIntent pi=n.contentIntent;
                 row.setOnClickListener(v->{ if(pi!=null) try{pi.send();}catch(Exception ignored){} hidePanel();});
             }
         }

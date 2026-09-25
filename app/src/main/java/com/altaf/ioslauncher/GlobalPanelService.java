@@ -25,17 +25,17 @@ public class GlobalPanelService extends Service {
   if(panel!=null)return;
   FrameLayout root=new FrameLayout(this); root.setBackgroundColor(Color.argb(46,0,0,0));
   LinearLayout sheet=new LinearLayout(this); sheet.setOrientation(LinearLayout.VERTICAL); sheet.setPadding(dp(18),dp(14),dp(18),dp(18));
-  GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{Color.argb(218,14,16,20),Color.argb(205,3,4,6)}); bg.setCornerRadius(dp(30)); bg.setStroke(dp(1),Color.argb(45,255,255,255)); sheet.setBackground(bg);
+  GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{ThemeEngine.glass(this,235),ThemeEngine.glass(this,210)}); bg.setCornerRadius(dp(30)); bg.setStroke(dp(1),Color.argb(45,255,255,255)); sheet.setBackground(bg);
   LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
   TextView title=txt("Notifications",22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
-  TextView clear=txt("Clear",14,true); clear.setGravity(Gravity.CENTER); clear.setPadding(dp(14),0,dp(14),0); clear.setBackground(round(Color.argb(36,255,255,255),16)); clear.setOnClickListener(v->{IOSNotificationService.clearAll();hide();});
+  TextView clear=txt("Clear",14,true); clear.setGravity(Gravity.CENTER); clear.setPadding(dp(14),0,dp(14),0); clear.setBackground(round(ThemeEngine.glass(this,150),16)); clear.setOnClickListener(v->{IOSNotificationService.clearAll();hide();});
   top.addView(clear,new LinearLayout.LayoutParams(dp(72),dp(38))); sheet.addView(top);
   TextView status=txt(status(),12,false); status.setTextColor(Color.LTGRAY); LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(34)); sp.setMargins(0,0,0,dp(8)); sheet.addView(status,sp);
   ScrollView scroll=new ScrollView(this); LinearLayout list=new LinearLayout(this); list.setOrientation(LinearLayout.VERTICAL); scroll.addView(list,new ScrollView.LayoutParams(-1,-2));
   List<IOSNotificationService.Item> items=IOSNotificationService.snapshot();
   if(items.isEmpty()){TextView empty=txt("No new notifications",15,false); empty.setGravity(Gravity.CENTER); list.addView(empty,new LinearLayout.LayoutParams(-1,dp(110)));}
   for(IOSNotificationService.Item n:items){
-   LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14),dp(12),dp(14),dp(12)); row.setBackground(round(Color.argb(38,255,255,255),20));
+   LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14),dp(12),dp(14),dp(12)); row.setBackground(round(ThemeEngine.glass(this,150),ThemeEngine.radius(this)));
    ImageView icon=new ImageView(this); try{icon.setImageDrawable(getPackageManager().getApplicationIcon(n.packageName));}catch(Exception x){icon.setImageResource(android.R.drawable.sym_def_app_icon);} row.addView(icon,new LinearLayout.LayoutParams(dp(40),dp(40)));
    LinearLayout words=new LinearLayout(this); words.setOrientation(LinearLayout.VERTICAL); words.setPadding(dp(12),0,0,0);
    TextView app=txt(n.appName,13,true); TextView body=txt(n.title+(n.text==null||n.text.isEmpty()?"":"\n"+n.text),14,false); body.setMaxLines(3); body.setEllipsize(android.text.TextUtils.TruncateAt.END); words.addView(app); words.addView(body); row.addView(words,new LinearLayout.LayoutParams(0,-2,1));

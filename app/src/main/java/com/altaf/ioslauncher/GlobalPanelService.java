@@ -65,16 +65,16 @@ public class GlobalPanelService extends Service {
         root.setBackgroundColor(Color.argb(72,0,0,0));
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(18),dp(18),dp(18),dp(18));
+        card.setPadding(dp(20),dp(20),dp(20),dp(22));
         GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.argb(232,18,20,25),Color.argb(218,5,6,9)});
         bg.setCornerRadius(dp(28)); bg.setStroke(dp(1),Color.argb(48,255,255,255));
         card.setBackground(bg);
         TextView title=label(control?"Control Center":"Notification Center",22,true);
-        card.addView(title,new LinearLayout.LayoutParams(-1,dp(48)));
+        LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(-1,dp(52)); titleLp.setMargins(0,0,0,dp(4)); card.addView(title,titleLp);
         TextView status=label(statusSummary(),13,false);
         status.setTextColor(Color.argb(210,255,255,255));
-        card.addView(status,new LinearLayout.LayoutParams(-1,dp(38)));
+        LinearLayout.LayoutParams statusLp=new LinearLayout.LayoutParams(-1,dp(40)); statusLp.setMargins(0,0,0,dp(10)); card.addView(status,statusLp);
         if(control){
             AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
             int mode=am==null?AudioManager.RINGER_MODE_NORMAL:am.getRingerMode();
@@ -93,14 +93,14 @@ public class GlobalPanelService extends Service {
             for(int i=0;i<count;i++){
                 IOSNotificationService.Item n=items.get(i);
                 TextView row=label("●  "+n.appName+"\n"+n.title+(n.text==null||n.text.isEmpty()?"":"  ·  "+n.text),14,false);
-                row.setMaxLines(3); row.setPadding(dp(14),dp(10),dp(14),dp(10)); row.setBackground(round(Color.argb(42,255,255,255),18));
-                LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,-2); rlp.setMargins(0,dp(9),0,0); card.addView(row,rlp);
+                row.setMaxLines(3); row.setLineSpacing(dp(2),1f); row.setPadding(dp(16),dp(13),dp(16),dp(13)); row.setBackground(round(Color.argb(42,255,255,255),18));
+                LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,-2); rlp.setMargins(0,dp(10),0,0); card.addView(row,rlp);
                 final android.app.PendingIntent pi=n.contentIntent;
                 row.setOnClickListener(v->{ if(pi!=null) try{pi.send();}catch(Exception ignored){} hidePanel();});
             }
         }
         FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,-2,Gravity.TOP);
-        cp.setMargins(dp(12),dp(34),dp(12),0); root.addView(card,cp);
+        cp.setMargins(dp(12),dp(28),dp(12),dp(18)); root.addView(card,cp);
         root.setOnTouchListener((v,e)->{ if(e.getActionMasked()==MotionEvent.ACTION_DOWN && e.getY()>card.getBottom()+dp(20)){hidePanel();return true;} return false;});
         panel=root;
         panelLp=new WindowManager.LayoutParams(-1,-1,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,

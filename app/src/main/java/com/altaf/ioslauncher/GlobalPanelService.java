@@ -27,7 +27,7 @@ public class GlobalPanelService extends Service {
   LinearLayout sheet=new LinearLayout(this); sheet.setOrientation(LinearLayout.VERTICAL); sheet.setPadding(dp(18),dp(14),dp(18),dp(18));
   GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{ThemeEngine.glass(this,ThemeEngine.panelAlpha(this)),ThemeEngine.glass(this,Math.max(120,ThemeEngine.panelAlpha(this)-28))}); bg.setCornerRadius(dp(ThemeEngine.cardRadius(this))); bg.setStroke(dp(1),Color.argb(45,255,255,255)); sheet.setBackground(bg);
   LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-  TextView title=txt("Notifications",22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
+  TextView title=txt(ThemeEngine.is(this,ThemeEngine.GALAXY)?"Notifications":"Notifications",ThemeEngine.is(this,ThemeEngine.GALAXY)?24:22,true); top.addView(title,new LinearLayout.LayoutParams(0,dp(48),1));
   TextView clear=txt("Clear",14,true); clear.setGravity(Gravity.CENTER); clear.setPadding(dp(14),0,dp(14),0); clear.setBackground(round(ThemeEngine.glass(this,ThemeEngine.glassAlpha(this)),ThemeEngine.radius(this))); clear.setOnClickListener(v->{IOSNotificationService.clearAll();hide();});
   top.addView(clear,new LinearLayout.LayoutParams(dp(72),dp(38))); sheet.addView(top);
   TextView status=txt(status(),12,false); status.setTextColor(Color.LTGRAY); LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(34)); sp.setMargins(0,0,0,dp(8)); sheet.addView(status,sp);
@@ -45,7 +45,7 @@ public class GlobalPanelService extends Service {
   }
   sheet.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
   TextView grab=txt("━━━━",18,true); grab.setGravity(Gravity.CENTER); grab.setTextColor(Color.GRAY); grab.setOnClickListener(v->hide()); sheet.addView(grab,new LinearLayout.LayoutParams(-1,dp(34)));
-  FrameLayout.LayoutParams fp=new FrameLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().heightPixels*.78f),Gravity.TOP); fp.setMargins(dp(10),dp(24),dp(10),0); root.addView(sheet,fp);
+  FrameLayout.LayoutParams fp=new FrameLayout.LayoutParams(-1,(int)(getResources().getDisplayMetrics().heightPixels*.78f),Gravity.TOP); fp.setMargins(ThemeEngine.is(this,ThemeEngine.GALAXY)?0:dp(10),ThemeEngine.is(this,ThemeEngine.GALAXY)?dp(8):dp(24),ThemeEngine.is(this,ThemeEngine.GALAXY)?0:dp(10),0); root.addView(sheet,fp);
   root.setOnTouchListener(new View.OnTouchListener(){float y; public boolean onTouch(View v,MotionEvent e){if(e.getActionMasked()==0){y=e.getRawY();return true;}if(e.getActionMasked()==1&&e.getRawY()-y< -dp(55)){hide();return true;}return false;}});
   panel=root; WindowManager.LayoutParams p=new WindowManager.LayoutParams(-1,-1,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN|WindowManager.LayoutParams.FLAG_DIM_BEHIND,PixelFormat.TRANSLUCENT);p.gravity=Gravity.TOP;p.dimAmount=.12f;if(Build.VERSION.SDK_INT>=31){p.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;p.setBlurBehindRadius(dp(22));}try{wm.addView(panel,p); panel.setTranslationY(-dp(90)); panel.setAlpha(0f); panel.animate().translationY(0).alpha(1f).setDuration((long)(230*ThemeEngine.motion(GlobalPanelService.this))).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();}catch(Exception x){panel=null;}
  }

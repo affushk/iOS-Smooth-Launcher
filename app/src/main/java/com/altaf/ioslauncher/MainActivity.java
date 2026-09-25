@@ -140,6 +140,9 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updateStatus();
+        if (android.os.Build.VERSION.SDK_INT >= 23 && Settings.canDrawOverlays(this)) {
+            try { startService(new Intent(this, GlobalPanelService.class)); } catch (Exception ignored) {}
+        }
     }
 
     @Override

@@ -836,7 +836,7 @@ public class MainActivity extends Activity {
         LinearLayout titleRow = new LinearLayout(this);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView title = title("Settings");
+        TextView title = title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"ALTAF / SETTINGS":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Galaxy Settings":ThemeEngine.is(this,ThemeEngine.STOCK)?"Settings · Material":"Settings · Glass");
         title.setGravity(Gravity.CENTER_VERTICAL);
         titleRow.addView(title,new LinearLayout.LayoutParams(0,dp(44),1f));
 
@@ -1104,7 +1104,7 @@ public class MainActivity extends Activity {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(12),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView h=title("Phone"); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
+        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"PHONE / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Phone · Galaxy":ThemeEngine.is(this,ThemeEngine.STOCK)?"Phone":"Phone  ◌"); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
         TextView close=text("✕",18,Color.WHITE); close.setGravity(Gravity.CENTER); close.setBackground(round(Color.rgb(28,30,36),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
         EditText number=new EditText(this); number.setHint("Phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.rgb(105,108,118)); number.setTextSize(27); number.setGravity(Gravity.CENTER); number.setSingleLine(true); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(number,new LinearLayout.LayoutParams(-1,dp(68)));
         TextView erase=text("⌫  Delete",14,Color.rgb(170,190,220)); erase.setGravity(Gravity.CENTER); p.addView(erase,new LinearLayout.LayoutParams(-1,dp(40))); erase.setOnClickListener(v->{int n=number.length();if(n>0)number.getText().delete(n-1,n);}); erase.setOnLongClickListener(v->{number.setText("");return true;});
@@ -1119,7 +1119,7 @@ public class MainActivity extends Activity {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
         LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(14),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView h=title("Messages"); top.addView(h,new LinearLayout.LayoutParams(0,dp(52),1f));
+        TextView h=title(ThemeEngine.is(this,ThemeEngine.ALTAF)?"MESSAGES / ALTAF":ThemeEngine.is(this,ThemeEngine.GALAXY)?"Messages · Galaxy":ThemeEngine.is(this,ThemeEngine.STOCK)?"Messages":"Messages  ◌"); top.addView(h,new LinearLayout.LayoutParams(0,dp(52),1f));
         TextView close=text("✕",18,ThemeEngine.text(this)); close.setGravity(Gravity.CENTER); close.setBackground(round(ThemeEngine.surface(this),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
         TextView compose=settingsRow("New Message","Compose using your phone's SMS service"); compose.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(compose,new LinearLayout.LayoutParams(-1,dp(68)));
         compose.setOnClickListener(v->{d.dismiss();try{startActivity(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:")));}catch(Exception ignored){}});
@@ -1417,7 +1417,10 @@ public class MainActivity extends Activity {
 
     private void styleIcon(ImageView icon) {
         icon.setClipToOutline(false);
-        icon.setPadding(0,0,0,0);
+        if (ThemeEngine.is(this,ThemeEngine.ALTAF)) { icon.setPadding(dp(4),dp(4),dp(4),dp(4)); icon.setAlpha(.96f); }
+        else if (ThemeEngine.is(this,ThemeEngine.GALAXY)) { icon.setPadding(dp(1),dp(1),dp(1),dp(1)); icon.setAlpha(1f); }
+        else if (ThemeEngine.is(this,ThemeEngine.STOCK)) { icon.setPadding(dp(6),dp(6),dp(6),dp(6)); icon.setAlpha(1f); }
+        else { icon.setPadding(dp(3),dp(3),dp(3),dp(3)); icon.setAlpha(.98f); }
     }
 
     private void animateDialogOpen(Dialog dialog) {
@@ -1711,16 +1714,13 @@ public class MainActivity extends Activity {
     }
 
     private Drawable glassRound(int radius) {
-        boolean dark="AMOLED".equals(theme) || "GRAPHITE".equals(theme);
-        int alpha=Math.max(30,Math.min(150,glassAlpha+20));
-        GradientDrawable g=new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                dark
-                        ? new int[]{Color.argb(alpha,34,37,45),Color.argb(Math.max(25,alpha-25),18,20,27)}
-                        : new int[]{Color.argb(alpha,235,243,255),Color.argb(Math.max(24,alpha-38),120,165,225)}
-        );
-        g.setCornerRadius(dp(radius));
-        g.setStroke(dp(1),Color.argb(40,255,255,255));
+        GradientDrawable g=new GradientDrawable();
+        int r=ThemeEngine.cardRadius(this);
+        if(ThemeEngine.is(this,ThemeEngine.ALTAF)){ g.setColor(Color.rgb(10,10,10)); g.setStroke(dp(1),Color.argb(105,214,169,102)); r=14; }
+        else if(ThemeEngine.is(this,ThemeEngine.GALAXY)){ g.setColor(Color.rgb(31,32,39)); g.setStroke(0,Color.TRANSPARENT); r=30; }
+        else if(ThemeEngine.is(this,ThemeEngine.STOCK)){ g.setColor(Color.rgb(34,39,50)); g.setStroke(dp(1),Color.argb(70,180,204,255)); r=20; }
+        else { g.setColor(Color.argb(175,38,45,58)); g.setStroke(dp(1),Color.argb(105,255,255,255)); r=34; }
+        g.setCornerRadius(dp(r));
         return g;
     }
 

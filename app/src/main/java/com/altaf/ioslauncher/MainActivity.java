@@ -298,6 +298,7 @@ public class MainActivity extends Activity {
 
     private void buildLauncher() {
         root = new FrameLayout(this);
+        root.setBackgroundColor(ThemeEngine.background(this));
         applyWallpaper();
 
         content = new LinearLayout(this);
@@ -466,7 +467,7 @@ public class MainActivity extends Activity {
         TextView search = text("⌕  Search", 13, Color.WHITE);
         search.setGravity(Gravity.CENTER);
         search.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        search.setBackground(round(Color.argb(98, 18, 20, 28), 18));
+        search.setBackground(round(ThemeEngine.glass(this,98, 18, 20, 28), 18));
         holder.addView(search, new LinearLayout.LayoutParams(dp(124), dp(34)));
         search.setOnClickListener(v -> {
             press(v);
@@ -488,9 +489,9 @@ public class MainActivity extends Activity {
         dock.setPadding(dp(14), dp(9), dp(14), dp(9));
         String ds=prefs.getString("dock_style","Glass");
         if("Transparent".equals(ds)) dock.setBackgroundColor(Color.TRANSPARENT);
-        else if("AMOLED".equals(ds)) dock.setBackground(round(Color.argb(235,0,0,0),30));
+        else if("AMOLED".equals(ds)) dock.setBackground(round(ThemeEngine.glass(this,235),ThemeEngine.radius(this)));
         else if("Outline".equals(ds)) { android.graphics.drawable.GradientDrawable gd=round(Color.argb(70,15,16,20),30); gd.setStroke(dp(1),Color.argb(120,255,255,255)); dock.setBackground(gd); }
-        else dock.setBackground(glassRound(30));
+        else dock.setBackground(round(ThemeEngine.glass(this,Math.max(90,glassAlpha*2)),ThemeEngine.radius(this)));
         // Keep dock icons razor-sharp: never blur the icon container itself.
 
         for (AppItem app : chooseDockApps()) {
@@ -622,9 +623,9 @@ public class MainActivity extends Activity {
         editBar = new LinearLayout(this);
         editBar.setGravity(Gravity.CENTER);
         editBar.setPadding(dp(5),dp(4),dp(5),dp(4));
-        editBar.setBackground(round(Color.argb(225,30,33,42), 20));
+        editBar.setBackground(round(ThemeEngine.glass(this,225), ThemeEngine.radius(this)));
 
-        TextView customize = text("Customize", 12, Color.rgb(125,190,255));
+        TextView customize = text("Customize", 12, ThemeEngine.accent(this));
         customize.setGravity(Gravity.CENTER);
         customize.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         editBar.addView(customize, new LinearLayout.LayoutParams(dp(92),dp(34)));

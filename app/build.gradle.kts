@@ -10,8 +10,8 @@ android {
         applicationId = "com.altaf.designerhome"
         minSdk = 26
         targetSdk = 35
-        versionCode = 24
-        versionName = "24.0.0"
+        versionCode = 25
+        versionName = "25.0.0"
     }
 
     compileOptions {

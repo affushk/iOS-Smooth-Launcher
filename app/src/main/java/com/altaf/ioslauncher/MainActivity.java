@@ -303,7 +303,8 @@ public class MainActivity extends Activity {
 
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        int themeSpace=ThemeEngine.homeSpacing(this);\n        content.setPadding(dp(themeSpace+6), dp(themeSpace), dp(themeSpace+6), dp(themeSpace+2));
+        int themeSpace=ThemeEngine.homeSpacing(this);
+        content.setPadding(dp(themeSpace+6), dp(themeSpace), dp(themeSpace+6), dp(themeSpace+2));
         root.addView(content, new FrameLayout.LayoutParams(-1, -1));
 
         buildStatusBar();

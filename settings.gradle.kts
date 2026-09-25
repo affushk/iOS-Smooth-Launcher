@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "iOS Smooth Launcher"
+rootProject.name = "AltafThemeStudio"
 include(":app")

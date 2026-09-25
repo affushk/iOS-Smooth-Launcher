@@ -51,7 +51,7 @@ public final class IOSSystemPanels {
 
         LinearLayout sheet = new LinearLayout(activity);
         sheet.setOrientation(LinearLayout.VERTICAL);
-        sheet.setPadding(dp(activity, 15), dp(activity, 15), dp(activity, 15), dp(activity, 18));
+        sheet.setPadding(dp(activity, 16), dp(activity, 24), dp(activity, 16), dp(activity, 20));
         sheet.setBackground(glass(activity, 32, 224));
 
         FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(dp(activity, 340), -2, Gravity.TOP | Gravity.RIGHT);
@@ -227,7 +227,7 @@ public final class IOSSystemPanels {
         notificationTitleRow.setGravity(Gravity.CENTER_VERTICAL);
         notificationTitleRow.setPadding(dp(activity,4),dp(activity,12),dp(activity,4),dp(activity,4));
 
-        TextView title = text(activity, "Notification Center", 16, Color.WHITE);
+        TextView title = text(activity, "Notifications", 22, Color.WHITE);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         notificationTitleRow.addView(title,new LinearLayout.LayoutParams(0,dp(activity,46),1f));
 
@@ -287,7 +287,7 @@ public final class IOSSystemPanels {
             }
         }
 
-        TextView close = text(activity, "Close", 14, Color.WHITE);
+        TextView close = text(activity, "Done", 14, Color.WHITE);
         close.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         close.setGravity(Gravity.CENTER);
         close.setBackground(round(Color.argb(120,255,255,255), 18, activity));

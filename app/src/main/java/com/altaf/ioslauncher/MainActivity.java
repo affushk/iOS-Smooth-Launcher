@@ -3,6 +3,8 @@ package com.altaf.ioslauncher;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.media.AudioManager;
 import android.app.role.RoleManager;
 import android.app.Dialog;
 import android.app.WallpaperManager;

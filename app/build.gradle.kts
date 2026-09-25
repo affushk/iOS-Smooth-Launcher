@@ -7,11 +7,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.altaf.designerhome"
+        applicationId = "com.altaf.themestudio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 34
-        versionName = "34.0.0"
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     compileOptions {

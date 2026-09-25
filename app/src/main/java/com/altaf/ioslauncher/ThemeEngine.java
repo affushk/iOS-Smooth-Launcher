@@ -6,7 +6,7 @@ public final class ThemeEngine {
  private ThemeEngine(){}
  public static final String ALTAF="Altaf AMOLED", GALAXY="Galaxy Style", STOCK="Stock Android", IOS="iOS Glass";
  public static String name(Context c){String n=c.getSharedPreferences("launcher_prefs",Context.MODE_PRIVATE).getString("theme",ALTAF);return normalize(n);}
- public static String normalize(String n){if("AMOLED".equals(n)||"Bronze".equals(n)||"Graphite".equals(n))return ALTAF;if("Midnight".equals(n))return STOCK;return n==null?ALTAF:n;}
+ public static String normalize(String n){if(n==null)return ALTAF;if(ALTAF.equals(n)||GALAXY.equals(n)||STOCK.equals(n)||IOS.equals(n))return n;if("BLUE".equalsIgnoreCase(n)||"Midnight".equalsIgnoreCase(n)||"SYSTEM".equalsIgnoreCase(n))return STOCK;if("AMOLED".equalsIgnoreCase(n)||"Bronze".equalsIgnoreCase(n)||"Graphite".equalsIgnoreCase(n)||"PURPLE".equalsIgnoreCase(n))return ALTAF;return ALTAF;}
  public static int background(Context c){switch(name(c)){case GALAXY:return Color.rgb(8,9,12);case STOCK:return Color.rgb(8,12,18);case IOS:return Color.rgb(5,6,9);default:return Color.BLACK;}}
  public static int surface(Context c){switch(name(c)){case GALAXY:return Color.rgb(28,29,34);case STOCK:return Color.rgb(27,31,40);case IOS:return Color.rgb(24,25,30);default:return Color.rgb(14,14,16);}}
  public static int surfaceAlt(Context c){switch(name(c)){case GALAXY:return Color.rgb(38,39,45);case STOCK:return Color.rgb(36,42,54);case IOS:return Color.rgb(35,36,43);default:return Color.rgb(25,25,28);}}

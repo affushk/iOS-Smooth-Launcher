@@ -2,4 +2,4 @@ Trigger APK build.
 V22 artifact-name verification rebuild.
 
 V23 final artifact verification rebuild.
-\nV24 top touch fix build\nV24 final overlay verification\nV24 compile fix retry
+\nV24 top touch fix build\nV24 final overlay verification\nV24 compile fix retry\nV24 clean named final

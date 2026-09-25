@@ -4,4 +4,4 @@ V22 artifact-name verification rebuild.
 V23 final artifact verification rebuild.
 \nV24 top touch fix build\nV24 final overlay verification\nV24 compile fix retry\nV24 clean named final\nV25 final verification\nV26 final build\nV27 notification shade build\nV28 gesture status header build\nV28 compile import fix retry
 V29 final four-theme APK build
-V30 structural themes final build\n
+V30 structural themes final build\nV30 compile-context fix rebuild\n

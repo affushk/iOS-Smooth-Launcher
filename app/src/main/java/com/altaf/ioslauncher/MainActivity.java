@@ -217,7 +217,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadPreferences() {
-        theme = prefs.getString("theme", "AMOLED");
+        theme = ThemeEngine.name(this);
         columns = prefs.getInt("columns", 4);
         rows = prefs.getInt("rows", 5);
         iconDp = prefs.getInt("icon_dp", 58);
@@ -821,7 +821,7 @@ public class MainActivity extends Activity {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(16),dp(12),dp(16),dp(24));
-        panel.setBackground(round(Color.rgb(22,24,31),28));
+        panel.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         scroll.addView(panel,new ScrollView.LayoutParams(-1,-2));
 
         View handle = new View(this);
@@ -849,13 +849,12 @@ public class MainActivity extends Activity {
         LinearLayout themeCard = group();
         themeCard.addView(groupTitle("Appearance"));
         LinearLayout themeRow1 = chipRow();
-        addThemeChip(themeRow1,"System","SYSTEM",dialog);
-        addThemeChip(themeRow1,"Electric Blue","BLUE",dialog);
-        addThemeChip(themeRow1,"Purple","PURPLE",dialog);
+        addThemeChip(themeRow1,"Altaf AMOLED",ThemeEngine.ALTAF,dialog);
+        addThemeChip(themeRow1,"Galaxy Style",ThemeEngine.GALAXY,dialog);
         themeCard.addView(themeRow1,new LinearLayout.LayoutParams(-1,dp(45)));
         LinearLayout themeRow2 = chipRow();
-        addThemeChip(themeRow2,"AMOLED","AMOLED",dialog);
-        addThemeChip(themeRow2,"Graphite","GRAPHITE",dialog);
+        addThemeChip(themeRow2,"Stock Android",ThemeEngine.STOCK,dialog);
+        addThemeChip(themeRow2,"iOS Glass",ThemeEngine.IOS,dialog);
         themeCard.addView(themeRow2,new LinearLayout.LayoutParams(-1,dp(45)));
         addCard(panel,themeCard);
 
@@ -1101,25 +1100,30 @@ public class MainActivity extends Activity {
 
     private void showQuickDialer() {
         final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(12),dp(18),dp(22)); p.setBackground(round(Color.rgb(5,6,9),30));
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(12),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
         TextView h=title("Phone"); top.addView(h,new LinearLayout.LayoutParams(0,dp(48),1f));
         TextView close=text("✕",18,Color.WHITE); close.setGravity(Gravity.CENTER); close.setBackground(round(Color.rgb(28,30,36),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
-        EditText number=new EditText(this); number.setHint("Phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.rgb(105,108,118)); number.setTextSize(27); number.setGravity(Gravity.CENTER); number.setSingleLine(true); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(Color.rgb(18,20,26),22)); p.addView(number,new LinearLayout.LayoutParams(-1,dp(68)));
+        EditText number=new EditText(this); number.setHint("Phone number"); number.setTextColor(Color.WHITE); number.setHintTextColor(Color.rgb(105,108,118)); number.setTextSize(27); number.setGravity(Gravity.CENTER); number.setSingleLine(true); number.setInputType(android.text.InputType.TYPE_CLASS_PHONE); number.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(number,new LinearLayout.LayoutParams(-1,dp(68)));
         TextView erase=text("⌫  Delete",14,Color.rgb(170,190,220)); erase.setGravity(Gravity.CENTER); p.addView(erase,new LinearLayout.LayoutParams(-1,dp(40))); erase.setOnClickListener(v->{int n=number.length();if(n>0)number.getText().delete(n-1,n);}); erase.setOnLongClickListener(v->{number.setText("");return true;});
         String[][] keys={{"1","2\nABC","3\nDEF"},{"4\nGHI","5\nJKL","6\nMNO"},{"7\nPQRS","8\nTUV","9\nWXYZ"},{"*","0\n+","#"}};
-        for(String[] row:keys){ LinearLayout r=new LinearLayout(this); r.setGravity(Gravity.CENTER); for(String k:row){ TextView b=text(k,20,Color.WHITE); b.setGravity(Gravity.CENTER); b.setBackground(round(Color.rgb(20,22,28),30)); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(72),1f); lp.setMargins(dp(6),dp(5),dp(6),dp(5)); r.addView(b,lp); b.setOnClickListener(v->{number.append(k.substring(0,1));press(v);}); } p.addView(r,new LinearLayout.LayoutParams(-1,dp(82))); }
+        for(String[] row:keys){ LinearLayout r=new LinearLayout(this); r.setGravity(Gravity.CENTER); for(String k:row){ TextView b=text(k,20,Color.WHITE); b.setGravity(Gravity.CENTER); b.setBackground(round(ThemeEngine.surfaceAlt(this),ThemeEngine.radius(this))); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(72),1f); lp.setMargins(dp(6),dp(5),dp(6),dp(5)); r.addView(b,lp); b.setOnClickListener(v->{number.append(k.substring(0,1));press(v);}); } p.addView(r,new LinearLayout.LayoutParams(-1,dp(82))); }
         TextView call=text("☎",25,Color.BLACK); call.setGravity(Gravity.CENTER); call.setBackground(round(Color.rgb(80,215,125),31)); LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(dp(74),dp(62)); clp.gravity=Gravity.CENTER_HORIZONTAL; clp.setMargins(0,dp(10),0,0); p.addView(call,clp);
         call.setOnClickListener(v->{String n=number.getText().toString().trim();if(!n.isEmpty())try{startActivity(new Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(n))));}catch(Exception ignored){}});
         d.setContentView(p); d.show(); Window w=d.getWindow(); if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);w.setLayout(-1,-2);}
     }
 
     private void openMessagesHub() {
-        try {
-            Intent i=new Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_APP_MESSAGING); startActivity(i);
-        } catch(Exception e) {
-            try { startActivity(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:"))); } catch(Exception ignored) {}
-        }
+        final Dialog d=new Dialog(this); d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        LinearLayout p=new LinearLayout(this); p.setOrientation(LinearLayout.VERTICAL); p.setPadding(dp(18),dp(14),dp(18),dp(22)); p.setBackground(round(ThemeEngine.background(this),ThemeEngine.radius(this)));
+        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView h=title("Messages"); top.addView(h,new LinearLayout.LayoutParams(0,dp(52),1f));
+        TextView close=text("✕",18,ThemeEngine.text(this)); close.setGravity(Gravity.CENTER); close.setBackground(round(ThemeEngine.surface(this),18)); top.addView(close,new LinearLayout.LayoutParams(dp(42),dp(42))); close.setOnClickListener(v->d.dismiss()); p.addView(top);
+        TextView compose=settingsRow("New Message","Compose using your phone's SMS service"); compose.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this))); p.addView(compose,new LinearLayout.LayoutParams(-1,dp(68)));
+        compose.setOnClickListener(v->{d.dismiss();try{startActivity(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:")));}catch(Exception ignored){}});
+        TextView inbox=settingsRow("Open Inbox","Open your current default messaging app"); LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(-1,dp(68));ilp.setMargins(0,dp(10),0,0);p.addView(inbox,ilp); inbox.setBackground(round(ThemeEngine.surfaceAlt(this),ThemeEngine.radius(this)));
+        inbox.setOnClickListener(v->{d.dismiss();try{Intent i=new Intent(Intent.ACTION_MAIN);i.addCategory(Intent.CATEGORY_APP_MESSAGING);startActivity(i);}catch(Exception ignored){}});
+        d.setContentView(p);d.show();Window w=d.getWindow();if(w!=null){w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));w.setGravity(Gravity.BOTTOM);w.setLayout(-1,-2);}
     }
 
     private void openDefaultApps() {
@@ -1136,12 +1140,12 @@ public class MainActivity extends Activity {
         LinearLayout g = new LinearLayout(this);
         g.setOrientation(LinearLayout.VERTICAL);
         g.setPadding(dp(8),dp(6),dp(8),dp(8));
-        g.setBackground(round(Color.rgb(36,39,48),22));
+        g.setBackground(round(ThemeEngine.surface(this),ThemeEngine.radius(this)));
         return g;
     }
 
     private TextView groupTitle(String s) {
-        TextView t = text(s,12,Color.rgb(130,185,255));
+        TextView t = text(s,12,ThemeEngine.accent(this));
         t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         t.setPadding(dp(10),dp(4),dp(10),dp(4));
         return t;
@@ -1185,7 +1189,7 @@ public class MainActivity extends Activity {
         row.addView(chip,new LinearLayout.LayoutParams(0,dp(38),1f));
         chip.setOnClickListener(v -> {
             theme=value;
-            prefs.edit().putString("theme",value).apply();
+            ThemeEngine.set(this,value);
             rebuildAfterSettings(dialog);
         });
     }

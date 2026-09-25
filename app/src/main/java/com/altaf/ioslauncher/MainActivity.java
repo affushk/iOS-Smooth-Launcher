@@ -1774,8 +1774,21 @@ public class MainActivity extends Activity {
             super.onDraw(canvas);
             paint.setColor(Color.WHITE);
 
+            // Live status indicators: silent/vibrate, next alarm and notification app icons
+            float ix=dp(1);
+            try{
+                AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
+                int rm=am.getRingerMode();
+                if(rm==AudioManager.RINGER_MODE_SILENT){ paint.setTextSize(dp(11)); canvas.drawText("S",ix,dp(16),paint); ix+=dp(13); }
+                else if(rm==AudioManager.RINGER_MODE_VIBRATE){ paint.setTextSize(dp(11)); canvas.drawText("V",ix,dp(16),paint); ix+=dp(13); }
+                AlarmManager aa=(AlarmManager)getSystemService(ALARM_SERVICE);
+                if(aa.getNextAlarmClock()!=null){ paint.setTextSize(dp(12)); canvas.drawText("⏰",ix,dp(17),paint); ix+=dp(16); }
+                java.util.List<IOSNotificationService.Item> ns=IOSNotificationService.snapshot();
+                int shown=0;
+                for(IOSNotificationService.Item n:ns){ if(shown>=2)break; try{Drawable d=getPackageManager().getApplicationIcon(n.packageName); int s=dp(15); d.setBounds((int)ix,dp(5),(int)ix+s,dp(20)); d.draw(canvas); ix+=dp(18);shown++;}catch(Exception ignored){}}
+            }catch(Exception ignored){}
             // Cellular bars
-            float x = dp(1);
+            float x = Math.max(dp(1), ix);
             float base = dp(20);
             for (int i=0;i<4;i++) {
                 float h = dp(4 + i*3);
@@ -1785,7 +1798,7 @@ public class MainActivity extends Activity {
             // Wi-Fi arcs
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(dp(1.6f));
-            float wx = dp(29);
+            float wx = x + dp(28);
             float wy = dp(13);
             for (int i=0;i<3;i++) {
                 float r = dp(4 + i*3);
@@ -1798,7 +1811,7 @@ public class MainActivity extends Activity {
             // Battery
             BatteryManager bm=(BatteryManager)getSystemService(BATTERY_SERVICE);
             int pct=bm==null?0:bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
-            float bx=dp(48), by=dp(7), bw=dp(27), bh=dp(13);
+            float bx=x+dp(47), by=dp(7), bw=dp(27), bh=dp(13);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(dp(1.2f));
             rect.set(bx,by,bx+bw,by+bh);
@@ -1816,6 +1829,7 @@ public class MainActivity extends Activity {
             canvas.drawText(String.valueOf(pct), bx + bw/2f, by + dp(10), paint);
             paint.setTextAlign(Paint.Align.LEFT);
             paint.setColor(Color.WHITE);
+            postInvalidateDelayed(1000);
         }
     }
 

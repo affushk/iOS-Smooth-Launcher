@@ -10,8 +10,8 @@ android {
         applicationId = "com.altaf.themestudio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "3.2.0"
+        versionCode = 7
+        versionName = "3.3.0"
     }
 
     compileOptions {

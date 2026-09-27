@@ -29,7 +29,8 @@ public class MainActivity extends Activity {
       TextView icons=card("◉  Icon Style");icons.setOnClickListener(v->showEditor("Icon Style"));
       TextView create=card("✦  Create New Theme");create.setOnClickListener(v->showEditor("New Theme"));
       TextView my=card("▣  My Themes");my.setOnClickListener(v->showMyThemes());
-      TextView vivo=card("⇩  Import Vivo Resource");vivo.setOnClickListener(v->{pickMode=9;pick("*/*");});\n      TextView scan=card("⌕  Scan accessible Vivo folder");scan.setOnClickListener(v->pickVivoFolder());
+      TextView vivo=card("⇩  Import Vivo Resource");vivo.setOnClickListener(v->{pickMode=9;pick("*/*");});
+      TextView scan=card("⌕  Scan accessible Vivo folder");scan.setOnClickListener(v->pickVivoFolder());
 
       TextView info=t("Target: vivo Y75 • Android 13 • Themes V20.5.6.0\nOffline creator • Preview • Save • Import/Export",13,false);info.setTextColor(Color.rgb(180,199,230));body.addView(info,new LinearLayout.LayoutParams(-1,dp(74)));
       Space fill=new Space(this);body.addView(fill,new LinearLayout.LayoutParams(1,0,1));

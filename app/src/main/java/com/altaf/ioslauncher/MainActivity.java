@@ -23,13 +23,14 @@ public class MainActivity extends Activity {
     private GradientDrawable bg(int color,int r){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp(r));return g;}
     private void base(String title){body=new LinearLayout(this);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(18),dp(24),dp(18),dp(16));body.setBackgroundColor(Color.rgb(4,18,47));setContentView(body);TextView h=t(title,28,true);body.addView(h,new LinearLayout.LayoutParams(-1,dp(64)));}
     private TextView card(String s){TextView v=t(s,16,true);v.setBackground(bg(Color.rgb(16,42,84),18));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(58));p.setMargins(0,0,0,dp(8));body.addView(v,p);return v;}
-    private void showHome(){base("Altaf Theme Studio"); EditText search=new EditText(this);search.setHint("Search themes");search.setHintTextColor(Color.LTGRAY);search.setTextColor(Color.WHITE);search.setSingleLine();search.setBackground(bg(Color.rgb(25,55,102),28));body.addView(search,new LinearLayout.LayoutParams(-1,dp(58)));
+    private void showHome(){base("Altaf Theme Studio  V3.4"); EditText search=new EditText(this);search.setHint("Search themes");search.setHintTextColor(Color.LTGRAY);search.setTextColor(Color.WHITE);search.setSingleLine();search.setBackground(bg(Color.rgb(25,55,102),28));body.addView(search,new LinearLayout.LayoutParams(-1,dp(58)));
       Space s=new Space(this);body.addView(s,new LinearLayout.LayoutParams(1,dp(18)));
       TextView imp=card("＋  Import theme / font");imp.setOnClickListener(v->{pickMode=1;pick("*/*");});
       TextView icons=card("◉  Icon Style");icons.setOnClickListener(v->showEditor("Icon Style"));
       TextView create=card("✦  Create New Theme");create.setOnClickListener(v->showEditor("New Theme"));
       TextView my=card("▣  My Themes");my.setOnClickListener(v->showMyThemes());
-      TextView diag=card("⇩  Import Vivo Resource");diag.setOnClickListener(v->{pickMode=9;pick("*/*");});
+      TextView vivo=card("⇩  Import Vivo Resource");vivo.setOnClickListener(v->{pickMode=9;pick("*/*");});
+
       TextView info=t("Target: vivo Y75 • Android 13 • Themes V20.5.6.0\nOffline creator • Preview • Save • Import/Export",13,false);info.setTextColor(Color.rgb(180,199,230));body.addView(info,new LinearLayout.LayoutParams(-1,dp(74)));
       Space fill=new Space(this);body.addView(fill,new LinearLayout.LayoutParams(1,0,1));
       LinearLayout nav=new LinearLayout(this);nav.setGravity(Gravity.CENTER);nav.setBackground(bg(Color.rgb(10,31,68),30));String[] ns={"⌂ Home","✎ Editor","◈ Style","⚙ Settings"};for(String n:ns){TextView x=t(n,12,false);x.setGravity(Gravity.CENTER);nav.addView(x,new LinearLayout.LayoutParams(0,dp(58),1));if(n.contains("Editor"))x.setOnClickListener(v->showEditor("Theme Editor"));}body.addView(nav,new LinearLayout.LayoutParams(-1,dp(58)));
